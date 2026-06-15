@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VidVault | Professional YouTube Video Downloader</title>
+    <meta name="description" content="Download YouTube videos instantly in high quality MP4 and MP3 format for free. Fast, secure, and no installation required.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <!-- ==========================================================================
+       DYNAMIC SPACE BACKGROUND
+       ========================================================================== -->
+    <div class="space-background">
+        <div class="space-gradient"></div>
+        <div class="glow-blob glow-blob-1"></div>
+        <div class="glow-blob glow-blob-2"></div>
+        <div class="grid-overlay"></div>
+        
+        <!-- Floating Animated Background Icons -->
+        <div class="floating-icon" style="top: 15%; left: 10%; --rot: -12deg; animation-delay: 0s;">
+            <svg width="64" height="64" viewBox="0 0 24 24" stroke="rgba(6, 182, 212, 0.1)" fill="none" stroke-width="1.5"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </div>
+        <div class="floating-icon" style="bottom: 20%; left: 5%; --rot: 12deg; animation-delay: 2s;">
+            <svg width="48" height="48" viewBox="0 0 24 24" stroke="rgba(99, 102, 241, 0.1)" fill="none" stroke-width="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </div>
+        <div class="floating-icon" style="top: 25%; right: 10%; --rot: 6deg; animation-delay: 1s;">
+            <svg width="80" height="80" viewBox="0 0 24 24" stroke="rgba(168, 85, 247, 0.1)" fill="none" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M10 9l5 3-5 3V9z"/></svg>
+        </div>
+        <div class="floating-icon" style="bottom: 25%; right: 15%; --rot: -6deg; animation-delay: 3s;">
+            <svg width="40" height="40" viewBox="0 0 24 24" stroke="rgba(59, 130, 246, 0.1)" fill="none" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       NAVIGATION BAR
+       ========================================================================== -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <div class="logo-icon">
+                    <div class="logo-glow"></div>
+                    <svg class="logo-svg" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <path d="M10 9l5 3-5 3V9z"/>
+                    </svg>
+                </div>
+                <span>VidVault</span>
+            </a>
+            
+            <div class="nav-links">
+                <a href="#" class="nav-link active">Downloader</a>
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#how-it-works" class="nav-link">How It Works</a>
+                <a href="#faq" class="nav-link">FAQ</a>
+            </div>
+            
+            <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
+                <svg class="arrow-icon" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+                    <path d="M3 12h18M3 6h18M3 18h18"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Mobile Dropdown Navigation -->
+        <div id="mobile-menu" class="mobile-menu">
+            <a href="#" class="mobile-nav-link active">Downloader</a>
+            <a href="#features" class="mobile-nav-link">Features</a>
+            <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
+            <a href="#faq" class="mobile-nav-link">FAQ</a>
+        </div>
+    </nav>
+
+    <!-- ==========================================================================
+       HERO / DOWNLOADER INPUT
+       ========================================================================== -->
+    <main class="hero-section">
+        <div class="container-hero">
+            
+            <!-- Live Version Badge -->
+            <div class="badge-version">
+                <span class="badge-dot"></span>
+                <span>VidVault v2.0 Live</span>
+            </div>
+            
+            <!-- Hero Heading -->
+            <h1 class="hero-title">
+                YouTube Video <br>
+                <span class="gradient-text">Downloader</span>
+            </h1>
+            
+            <p class="hero-subtitle">
+                Paste the link below to <span class="highlight-light">instantly</span> save videos in 
+                <span class="pill-tag">4K</span> 
+                <span class="pill-tag">HD</span>
+            </p>
+
+            <!-- Search and Input Bar -->
+            <div class="input-wrapper">
+                <div class="input-glow-bg"></div>
+                <div class="glass-input-container">
+                    <div class="input-row">
+                        <div class="field-container">
+                            <div class="field-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                </svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                id="url-input" 
+                                class="main-input" 
+                                placeholder="Paste YouTube Video Link here..."
+                                autocomplete="off"
+                            >
+                        </div>
+                        
+                        <button id="process-btn" class="btn-download">
+                            <div class="btn-shimmer"></div>
+                            <span id="btn-text">Download</span>
+                            <div id="btn-loader" class="btn-arrow-box" style="display: none;">
+                                <svg class="spinner" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.2)"></circle>
+                                    <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor"></path>
+                                </svg>
+                            </div>
+                            <div id="btn-arrow-icon" class="btn-arrow-box">
+                                <svg class="arrow-icon" viewBox="0 0 24 24">
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                    <polyline points="12 5 19 12 12 19"/>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trust Badges -->
+            <div class="trust-elements">
+                <div class="trust-item">
+                    <svg class="trust-icon" viewBox="0 0 24 24">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <span>Unlimited</span>
+                </div>
+                <div class="trust-item">
+                    <svg class="trust-icon" viewBox="0 0 24 24">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <span>Secure</span>
+                </div>
+                <div class="trust-item">
+                    <svg class="trust-icon" viewBox="0 0 24 24">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    <span>Fast</span>
+                </div>
+            </div>
+
+            <!-- ==========================================================================
+               DYNAMIC VIDEO INFO DISPLAY
+               ========================================================================== -->
+            <div id="video-card-container" class="video-card-container">
+                <div class="glass-card">
+                    <div class="card-main-grid">
+                        
+                        <!-- Thumbnail box -->
+                        <div class="card-thumbnail-box">
+                            <img id="video-thumbnail" src="" alt="Video thumbnail" class="thumbnail-img">
+                            <div class="thumbnail-overlay">
+                                <svg class="play-svg" viewBox="0 0 24 24">
+                                    <polygon points="5 3 19 12 5 21 5 3" fill="white"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Card text metadata -->
+                        <div class="card-content-box">
+                            <div>
+                                <div class="content-header-row">
+                                    <h3 id="video-title" class="video-title"></h3>
+                                    <span id="video-duration" class="duration-badge"></span>
+                                </div>
+                                
+                                <div class="format-badges-row">
+                                    <span class="format-badge badge-video">
+                                        <svg class="badge-mini-icon" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                                        MP4
+                                    </span>
+                                    <span class="format-badge badge-audio">
+                                        <svg class="badge-mini-icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                                        MP3
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Download simulated progress bar -->
+                            <div id="progress-box" class="download-progress-container">
+                                <div class="progress-header">
+                                    <span id="progress-label" class="progress-label">Downloading...</span>
+                                    <span id="progress-pct" class="progress-value">0%</span>
+                                </div>
+                                <div class="progress-bar-track">
+                                    <div id="progress-bar-fill" class="progress-bar-fill"></div>
+                                </div>
+                            </div>
+
+                            <!-- Tab Selector -->
+                            <div class="tabs-container">
+                                <button class="tab-btn active" data-tab="video">Video</button>
+                                <button class="tab-btn" data-tab="audio">Audio</button>
+                            </div>
+
+                            <!-- Video Tab Content -->
+                            <div id="video-tab-content" class="tab-content active">
+                                <div class="options-group">
+                                    <span class="options-label">Format</span>
+                                    <div id="video-formats" class="options-grid">
+                                        <!-- Populated dynamically via JS -->
+                                    </div>
+                                </div>
+                                <div class="options-group" style="margin-top: 1rem;">
+                                    <span class="options-label">Quality</span>
+                                    <div id="video-qualities" class="options-grid">
+                                        <!-- Populated dynamically via JS -->
+                                    </div>
+                                </div>
+                                <button id="download-video-btn" class="btn-download-action">
+                                    <span>Download Video</span>
+                                    <svg class="badge-mini-icon" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                                </button>
+                            </div>
+
+                            <!-- Audio Tab Content -->
+                            <div id="audio-tab-content" class="tab-content">
+                                <div class="options-group">
+                                    <span class="options-label">Format</span>
+                                    <div id="audio-formats" class="options-grid">
+                                        <button class="option-pill active" data-value="mp3">MP3</button>
+                                        <button class="option-pill" data-value="m4a">M4A</button>
+                                    </div>
+                                </div>
+                                <div class="options-group" style="margin-top: 1rem;">
+                                    <span class="options-label">Quality</span>
+                                    <div id="audio-qualities" class="options-grid">
+                                        <button class="option-pill" data-value="128kbps">128kbps</button>
+                                        <button class="option-pill" data-value="192kbps">192kbps</button>
+                                        <button class="option-pill active" data-value="320kbps">320kbps</button>
+                                    </div>
+                                </div>
+                                <button id="download-audio-btn" class="btn-download-action">
+                                    <span>Download Audio</span>
+                                    <svg class="badge-mini-icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SEO Accordion Trigger Bar -->
+                    <div class="card-footer-controls">
+                        <div class="status-indicator">
+                            <div class="pulse-dot-container">
+                                <span class="pulse-ping"></span>
+                                <span class="pulse-dot"></span>
+                            </div>
+                            <span class="status-text">Ready to Download</span>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1.5rem;">
+                            <button id="seo-trigger-btn" class="btn-action-text" style="color: #c084fc;">
+                                <svg class="badge-mini-icon" style="stroke: #c084fc" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                Generate AI SEO
+                            </button>
+                            <button id="download-all-btn" class="btn-action-text">
+                                Download All 
+                                <svg class="arrow-icon" viewBox="0 0 24 24">
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                    <polyline points="12 5 19 12 12 19"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ==========================================================================
+                       DYNAMIC GEMINI SEO INSIGHTS DISPLAY
+                       ========================================================================== -->
+                    <div id="seo-section" class="seo-section">
+                        <div class="seo-title-row">
+                            <h4 class="seo-heading">
+                                <svg class="seo-spark-icon" viewBox="0 0 24 24">
+                                    <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+                                </svg>
+                                Gemini AI SEO Insights
+                            </h4>
+                        </div>
+
+                        <!-- Loader -->
+                        <div id="seo-loader" class="seo-loader">
+                            <svg class="spinner" style="stroke: #22d3ee; width: 32px; height: 32px;" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="rgba(6,182,212,0.1)"></circle>
+                                <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor"></path>
+                            </svg>
+                            <span>Analyzing video metadata with Gemini...</span>
+                        </div>
+
+                        <!-- Results Content -->
+                        <div id="seo-results" class="seo-results">
+                            <div class="seo-field-box">
+                                <div class="seo-field-header">
+                                    <span class="seo-field-label">Optimized Title</span>
+                                    <button id="copy-title-btn" class="btn-copy" title="Copy Title">
+                                        <svg class="copy-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    </button>
+                                </div>
+                                <div id="seo-opt-title" class="seo-field-content font-light"></div>
+                            </div>
+
+                            <div class="seo-field-box">
+                                <div class="seo-field-header">
+                                    <span class="seo-field-label">Recommended Hashtags</span>
+                                    <button id="copy-tags-btn" class="btn-copy" title="Copy Tags">
+                                        <svg class="copy-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    </button>
+                                </div>
+                                <div id="seo-tags" class="seo-field-content seo-tags-content"></div>
+                            </div>
+
+                            <div class="seo-field-box">
+                                <div class="seo-field-header">
+                                    <span class="seo-field-label">Video Description</span>
+                                    <button id="copy-desc-btn" class="btn-copy" title="Copy Description">
+                                        <svg class="copy-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    </button>
+                                </div>
+                                <div id="seo-desc" class="seo-field-content font-light"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ==========================================================================
+       FEATURES SECTION
+       ========================================================================== -->
+    <section id="features" class="features-section">
+        <div class="features-bg">
+            <div class="features-stars"></div>
+        </div>
+        <div class="section-container">
+            <div class="section-header">
+                <div class="badge-social">
+                    <svg class="social-icon" viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Used by 100,000+ Users</span>
+                </div>
+                <h2 class="section-title">
+                    Fastest <span class="gradient-text">Video Downloader</span>
+                </h2>
+                <p class="section-subtitle">
+                    Download directly from your browser without installing software. A trustworthy and reliable tool.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                <!-- Card 1 -->
+                <div class="feature-card">
+                    <div class="card-shine"></div>
+                    <div class="feature-icon-box">
+                        <svg class="feature-card-icon" viewBox="0 0 24 24">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Super Fast Speed</h3>
+                    <p class="feature-desc">Our system is lightning fast. Video downloads start instantly without any waiting time.</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="feature-card">
+                    <div class="card-shine"></div>
+                    <div class="feature-icon-box">
+                        <svg class="feature-card-icon" viewBox="0 0 24 24">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">100% Safe & Secure</h3>
+                    <p class="feature-desc">Your privacy is our priority. We do not store any personal user data on our servers.</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="feature-card">
+                    <div class="card-shine"></div>
+                    <div class="feature-icon-box">
+                        <svg class="feature-card-icon" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">No Pop-up Ads</h3>
+                    <p class="feature-desc">Clean experience. No need to worry about annoying ads. A completely smooth interface.</p>
+                </div>
+                <!-- Card 4 -->
+                <div class="feature-card">
+                    <div class="card-shine"></div>
+                    <div class="feature-icon-box">
+                        <svg class="feature-card-icon" viewBox="0 0 24 24">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">All Devices Support</h3>
+                    <p class="feature-desc">Mobile, Tablet, Laptop - this downloader works perfectly on all browsers and devices.</p>
+                </div>
+                <!-- Card 5 -->
+                <div class="feature-card">
+                    <div class="card-shine"></div>
+                    <div class="feature-icon-box">
+                        <svg class="feature-card-icon" viewBox="0 0 24 24">
+                            <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">High Quality Options</h3>
+                    <p class="feature-desc">Select your preferred quality: 1080p, 720p, 4K, or just high-quality Audio (MP3).</p>
+                </div>
+                <!-- Card 6 -->
+                <div class="feature-card">
+                    <div class="card-shine"></div>
+                    <div class="feature-icon-box">
+                        <svg class="feature-card-icon" viewBox="0 0 24 24">
+                            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Lifetime Free</h3>
+                    <p class="feature-desc">Download unlimited videos completely for free. No hidden charges or subscriptions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+       HOW IT WORKS SECTION
+       ========================================================================== -->
+    <section id="how-it-works" class="steps-section">
+        <div class="steps-gradient"></div>
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">How It Works?</h2>
+                <p class="section-subtitle">Download videos in just 3 simple steps.</p>
+            </div>
+
+            <div class="steps-grid">
+                <!-- Step 1 -->
+                <div class="step-card">
+                    <div class="step-bg-number">01</div>
+                    <div class="step-num-badge">01</div>
+                    <h3 class="step-title">Copy Link</h3>
+                    <p class="step-desc">Go to the YouTube app or browser and copy the link (URL) of your favorite video.</p>
+                </div>
+                <!-- Step 2 -->
+                <div class="step-card">
+                    <div class="step-bg-number">02</div>
+                    <div class="step-num-badge">02</div>
+                    <h3 class="step-title">Paste Link</h3>
+                    <p class="step-desc">Come back to the website and paste the video link in the input box above.</p>
+                </div>
+                <!-- Step 3 -->
+                <div class="step-card">
+                    <div class="step-bg-number">03</div>
+                    <div class="step-num-badge">03</div>
+                    <h3 class="step-title">Download</h3>
+                    <p class="step-desc">Select your preferred format and quality, then click the download button. That's it!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+       FAQ SECTION
+       ========================================================================== -->
+    <section id="faq" class="faq-section">
+        <div class="faq-container">
+            <h2 class="section-title" style="text-align: center;">Frequently Asked Questions (FAQ)</h2>
+            <div class="faq-list">
+                
+                <!-- FAQ 1 -->
+                <div class="faq-item open">
+                    <button class="faq-trigger">
+                        <span>Is VidVault free?</span>
+                        <span class="faq-icon-holder">
+                            <svg class="faq-arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                    </button>
+                    <div class="faq-content">
+                        <p class="faq-answer">Yes, this tool is completely free. You can download as many videos as you want without any charges.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="faq-item">
+                    <button class="faq-trigger">
+                        <span>Is it safe and secure?</span>
+                        <span class="faq-icon-holder">
+                            <svg class="faq-arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                    </button>
+                    <div class="faq-content">
+                        <p class="faq-answer">Yes, it is 100% safe. We do not store any personal data or video history. You can use it without worry.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="faq-item">
+                    <button class="faq-trigger">
+                        <span>Does it work on mobile?</span>
+                        <span class="faq-icon-holder">
+                            <svg class="faq-arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                    </button>
+                    <div class="faq-content">
+                        <p class="faq-answer">Yes, this website works perfectly on Mobile (Android & iOS), Tablets, and Desktop browsers.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="faq-item">
+                    <button class="faq-trigger">
+                        <span>Is login required?</span>
+                        <span class="faq-icon-holder">
+                            <svg class="faq-arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                    </button>
+                    <div class="faq-content">
+                        <p class="faq-answer">No, you can download videos directly without any login or signup. No account is needed.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ 5 -->
+                <div class="faq-item">
+                    <button class="faq-trigger">
+                        <span>Which formats are supported?</span>
+                        <span class="faq-icon-holder">
+                            <svg class="faq-arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                    </button>
+                    <div class="faq-content">
+                        <p class="faq-answer">You can download videos in high-quality MP4, WEBM formats, and audio in MP3 format.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+       FOOTER SECTION
+       ========================================================================== -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-main-grid">
+                
+                <!-- Info Brand column -->
+                <div class="footer-brand-column">
+                    <a href="#" class="footer-logo">
+                        <svg width="32" height="32" viewBox="0 0 24 24" stroke="#06b6d4" fill="none" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <path d="M10 9l5 3-5 3V9z"/>
+                        </svg>
+                        VidVault
+                    </a>
+                    <p class="footer-desc">
+                        The best tool to download YouTube videos in MP4 & MP3. Fast, free and secure.
+                    </p>
+                    <div class="footer-disclaimer">
+                        Disclaimer: This tool is for personal use only. Please respect YouTube's Terms of Service and copyright laws. Do not download copyrighted content without permission.
+                    </div>
+                </div>
+
+                <!-- Quick links grid -->
+                <div class="footer-links-grid">
+                    <div class="footer-link-group">
+                        <h3 class="footer-group-heading">Quick Links</h3>
+                        <ul class="footer-list">
+                            <li><a href="#" class="footer-link">Downloader</a></li>
+                            <li><a href="#features" class="footer-link">Features</a></li>
+                            <li><a href="#how-it-works" class="footer-link">How it works</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-link-group">
+                        <h3 class="footer-group-heading">Support</h3>
+                        <ul class="footer-list">
+                            <li><a href="#" class="footer-link">Contact Us</a></li>
+                            <li><a href="#" class="footer-link">Report Issue</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-link-group">
+                        <h3 class="footer-group-heading">Legal</h3>
+                        <ul class="footer-list">
+                            <li><a href="#" class="footer-link">Privacy Policy</a></li>
+                            <li><a href="#" class="footer-link">Terms of Service</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom footer line -->
+            <div class="footer-bottom-bar">
+                <p class="copyright-text">&copy; 2026 VidVault. All rights reserved.</p>
+                <p class="made-with-love">Made with ❤️ for Creators</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom Logic Script -->
+    <script src="/app.js"></script>
+</body>
+</html>
