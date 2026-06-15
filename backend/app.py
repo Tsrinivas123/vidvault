@@ -371,18 +371,22 @@ def download():
     except Exception as e:
         print(f"Error in download: {e}")
         err_msg = str(e)
-        if "confirm you" in err_msg and "not a bot" in err_msg:
-            return jsonify({
-                'error': (
-                    'YouTube Sign-In Required!\n\n'
-                    'YouTube is requesting authentication. Since Chrome/Edge locks its cookies while open, please do one of the following:\n\n'
-                    '👉 Workaround 1 (Easiest): Open this downloader site (http://127.0.0.1:5000) in Microsoft Edge, then CLOSE Google Chrome completely. Now you can download without any cookie errors!\n\n'
-                    '👉 Workaround 2: Export your cookies using a browser extension (like "Get cookies.txt LOCALLY") and save the file as "cookies.txt" in the "backend/" folder.'
-                ),
-                'details': err_msg
-            }), 500
+        # if "confirm you" in err_msg and "not a bot" in err_msg:
+        #     return jsonify({
+        #         'error': (
+        #             'YouTube Sign-In Required!\n\n'
+        #             'YouTube is requesting authentication. Since Chrome/Edge locks its cookies while open, please do one of the following:\n\n'
+        #             '👉 Workaround 1 (Easiest): Open this downloader site (http://127.0.0.1:5000) in Microsoft Edge, then CLOSE Google Chrome completely. Now you can download without any cookie errors!\n\n'
+        #             '👉 Workaround 2: Export your cookies using a browser extension (like "Get cookies.txt LOCALLY") and save the file as "cookies.txt" in the "backend/" folder.'
+        #         ),
+        #         'details': err_msg
+        #     }), 500
+        # return jsonify({
+        #     'error': 'Download failed',
+        #     'details': str(e)
+        # }), 500
         return jsonify({
-            'error': 'Download failed',
+            'error': str(e),
             'details': str(e)
         }), 500
 
