@@ -467,13 +467,14 @@ def cleanup_loop():
 
 # Start background thread
 cleanup_thread = threading.Thread(target=cleanup_loop, daemon=True)
-cleanup_thread.start()
+# cleanup_thread.start()
 
 # if __name__ == '__main__':
 #     # Run server locally on port 5000
 #     app.run(host='0.0.0.0', port=5000, debug=True)
-import os
+if __name__ == "__main__":
+    cleanup_thread.start()
 
-if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    print(f"Starting on PORT {port}")
+    app.run(host="0.0.0.0", port=port, debug=False)
