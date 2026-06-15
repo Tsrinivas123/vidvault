@@ -119,7 +119,7 @@ def video_info():
         ydl_opts = {
             'noplaylist': True,
             'extract_flat': False,
-            **get_ydl_opts_cookies()
+            # **get_ydl_opts_cookies()
         }
 
         info = run_ytdl(ydl_opts, lambda ydl: ydl.extract_info(url, download=False))
@@ -206,7 +206,7 @@ def get_link():
         ydl_opts = {
             'format': fmt,
             'noplaylist': True,
-            **get_ydl_opts_cookies()
+            # **get_ydl_opts_cookies()
         }
 
         info = run_ytdl(ydl_opts, lambda ydl: ydl.extract_info(url, download=False))
@@ -285,7 +285,7 @@ def download():
                         'preferredcodec': codec,
                         'preferredquality': kbps,
                     }],
-                    **get_ydl_opts_cookies()
+                    # **get_ydl_opts_cookies()
                 }
             else:
                 print("ffmpeg not found for audio. Downloading raw audio stream directly...")
@@ -293,7 +293,7 @@ def download():
                 ydl_opts = {
                     'format': 'bestaudio/best',
                     'outtmpl': output_tmpl,
-                    **get_ydl_opts_cookies()
+                    # **get_ydl_opts_cookies()
                 }
         else:
             output_tmpl = os.path.join(DOWNLOADS_DIR, f'video_{timestamp}.%(ext)s')
@@ -306,7 +306,7 @@ def download():
                     'format': ytdl_format,
                     'outtmpl': output_tmpl,
                     'merge_output_format': ext,
-                    **get_ydl_opts_cookies()
+                    # **get_ydl_opts_cookies()
                 }
             else:
                 print("ffmpeg not found for video. Finding pre-merged format...")
@@ -314,7 +314,7 @@ def download():
                 # Fetch video formats list first
                 extract_opts = {
                     'noplaylist': True,
-                    **get_ydl_opts_cookies()
+                    # **get_ydl_opts_cookies()
                 }
                 info = run_ytdl(extract_opts, lambda ydl: ydl.extract_info(url, download=False))
                 
@@ -345,7 +345,7 @@ def download():
                 ydl_opts = {
                     'format': selected_format_id,
                     'outtmpl': output_tmpl,
-                    **get_ydl_opts_cookies()
+                    # **get_ydl_opts_cookies()
                 }
 
         run_ytdl(ydl_opts, lambda ydl: ydl.download([url]))
