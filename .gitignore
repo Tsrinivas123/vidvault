@@ -22,9 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-backend/cookies.txt
-backend/downloads/
-backend/node_modules/
-node_modules/
-.env

@@ -1,0 +1,83 @@
+/* src/index.css - Global Anime Cyberpunk Styling */
+
+:root {
+  --primary: 328 100% 59%;
+  /* Neon Pink */
+  --secondary: 190 100% 45%;
+  /* Cyan */
+  --accent: 271 100% 65%;
+  /* Purple */
+}
+
+/* Glassmorphism custom classes */
+.glass-card {
+  background: rgba(15, 10, 25, 0.55) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(192, 132, 252, 0.15) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 20px rgba(6, 182, 212, 0.15) !important;
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(6, 182, 212, 0.35) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 25px rgba(6, 182, 212, 0.25) !important;
+}
+
+/* Smooth background parallax setup */
+.space-background {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.space-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 120vh;
+  background: linear-gradient(rgba(10, 5, 25, 0.22), rgba(10, 5, 25, 0.22)), url('/cyberpunk_full_bg.png') no-repeat top center;
+  background-size: cover;
+  will-change: transform;
+}
+
+#ambient-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Custom CSS micro-animations & Tailwind extends */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #0a0519;
+}
+
+#root {
+  min-height: 100vh;
+}

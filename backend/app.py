@@ -17,12 +17,16 @@ DOWNLOADS_DIR = os.path.join(BACKEND_DIR, 'downloads')
 COOKIES_PATH = os.path.join(BACKEND_DIR, 'cookies.txt')
 
 def get_ydl_opts_cookies():
-    opts = {}
-    cookies_browser = os.environ.get('YT_COOKIES_FROM_BROWSER')
-    if cookies_browser:
-        opts['cookiesfrombrowser'] = (cookies_browser,)
-    elif os.path.exists(COOKIES_PATH):
+    opts = {
+        'js_runtimes': {'deno': {}, 'node': {}},
+        'remote_components': ['ejs:github', 'ejs:npm']
+    }
+    if os.path.exists(COOKIES_PATH):
         opts['cookiefile'] = COOKIES_PATH
+    else:
+        cookies_browser = os.environ.get('YT_COOKIES_FROM_BROWSER')
+        if cookies_browser:
+            opts['cookiesfrombrowser'] = (cookies_browser,)
     return opts
 
 class NullLogger:
@@ -43,16 +47,42 @@ def run_ytdl(ydl_opts, action_fn, *args, **kwargs):
     except Exception as e:
         err_msg = str(e)
         has_cookies = 'cookiesfrombrowser' in opts or 'cookiefile' in opts
-        is_lock_error = any(msg in err_msg for msg in ["Could not copy", "Permission denied", "database is locked", "sharing violation", "Failed to decrypt"])
+        should_fallback = any(msg in err_msg for msg in [
+            "Could not copy", "Permission denied", "database is locked", 
+            "sharing violation", "Failed to decrypt", "Requested format is not available",
+            "format is not available"
+        ])
         
-        if has_cookies and is_lock_error:
-            print(f"Warning: Cookie access failed due to lock/permissions. Retrying without cookies... Error: {e}")
+        if has_cookies and should_fallback:
+            print(f"Warning: Cookie access failed or format not available. Retrying without cookies... Error: {e}")
             fallback_opts = opts.copy()
             fallback_opts.pop('cookiesfrombrowser', None)
             fallback_opts.pop('cookiefile', None)
             with yt_dlp.YoutubeDL(fallback_opts) as ydl:
                 return action_fn(ydl, *args, **kwargs)
         raise e
+
+def handle_ytdl_error(e):
+    err_msg = str(e)
+    is_cookie_auth_issue = any(msg in err_msg for msg in [
+        "confirm you", 
+        "not a bot", 
+        "Requested format is not available", 
+        "format is not available",
+        "Sign in to confirm",
+        "Sign in to check"
+    ])
+    if is_cookie_auth_issue:
+        return jsonify({
+            'error': (
+                'YouTube Authentication / Cookie Error!\n\n'
+                'YouTube is blocking the request or requesting authentication. This usually happens if your cookies have expired or Chrome locks its cookie database.\n\n'
+                '👉 Workaround 1 (Easiest): Close Google Chrome completely. Then, open this downloader site in another browser (like Microsoft Edge). This allows the backend to read fresh cookies from Chrome without permission issues.\n\n'
+                '👉 Workaround 2: If you are using a "cookies.txt" file in the "backend/" folder, your cookies may have expired. Please export a fresh "cookies.txt" file using a browser extension (like "Get cookies.txt LOCALLY") and replace the old one.'
+            ),
+            'details': err_msg
+        }), 500
+    return None
 
 # Create downloads folder
 if not os.path.exists(DOWNLOADS_DIR):
@@ -67,7 +97,9 @@ else:
     print('No YT_COOKIES in ENV')
 
 # Initialize Flask app
-app = Flask(__name__, static_folder=ROOT_DIR, static_url_path='')
+DIST_DIR = os.path.join(ROOT_DIR, 'dist')
+STATIC_FOLDER = DIST_DIR if os.path.exists(DIST_DIR) else ROOT_DIR
+app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='')
 
 # Configure CORS
 CORS(app, resources={r"/api/*": {
@@ -86,7 +118,7 @@ CORS(app, resources={r"/api/*": {
 
 @app.route('/')
 def index():
-    return send_from_directory(ROOT_DIR, 'index.html')
+    return send_from_directory(STATIC_FOLDER, 'index.html')
 
 @app.route('/downloads/<path:filename>')
 def serve_download(filename):
@@ -119,7 +151,7 @@ def video_info():
         ydl_opts = {
             'noplaylist': True,
             'extract_flat': False,
-            # **get_ydl_opts_cookies()
+            **get_ydl_opts_cookies()
         }
 
         info = run_ytdl(ydl_opts, lambda ydl: ydl.extract_info(url, download=False))
@@ -161,22 +193,15 @@ def video_info():
             'title': info.get('title'),
             'thumbnail': info.get('thumbnail'),
             'duration': info.get('duration', 0),
+            'uploader': info.get('uploader') or info.get('channel') or 'YouTube Creator',
             'formats': formats
         })
 
     except Exception as e:
         print(f"Error in video-info: {e}")
-        err_msg = str(e)
-        if "confirm you" in err_msg and "not a bot" in err_msg:
-            return jsonify({
-                'error': (
-                    'YouTube Sign-In Required!\n\n'
-                    'YouTube is requesting authentication. Since Chrome/Edge locks its cookies while open, please do one of the following:\n\n'
-                    '👉 Workaround 1 (Easiest): Open this downloader site (http://127.0.0.1:5000) in Microsoft Edge, then CLOSE Google Chrome completely. Now you can download without any cookie errors!\n\n'
-                    '👉 Workaround 2: Export your cookies using a browser extension (like "Get cookies.txt LOCALLY") and save the file as "cookies.txt" in the "backend/" folder.'
-                ),
-                'details': err_msg
-            }), 500
+        error_resp = handle_ytdl_error(e)
+        if error_resp:
+            return error_resp
         return jsonify({
             'error': 'Video info failed',
             'details': str(e)
@@ -206,7 +231,7 @@ def get_link():
         ydl_opts = {
             'format': fmt,
             'noplaylist': True,
-            # **get_ydl_opts_cookies()
+            **get_ydl_opts_cookies()
         }
 
         info = run_ytdl(ydl_opts, lambda ydl: ydl.extract_info(url, download=False))
@@ -230,17 +255,9 @@ def get_link():
 
     except Exception as e:
         print(f"Error in get-link: {e}")
-        err_msg = str(e)
-        if "confirm you" in err_msg and "not a bot" in err_msg:
-            return jsonify({
-                'error': (
-                    'YouTube Sign-In Required!\n\n'
-                    'YouTube is requesting authentication. Since Chrome/Edge locks its cookies while open, please do one of the following:\n\n'
-                    '👉 Workaround 1 (Easiest): Open this downloader site (http://127.0.0.1:5000) in Microsoft Edge, then CLOSE Google Chrome completely. Now you can download without any cookie errors!\n\n'
-                    '👉 Workaround 2: Export your cookies using a browser extension (like "Get cookies.txt LOCALLY") and save the file as "cookies.txt" in the "backend/" folder.'
-                ),
-                'details': err_msg
-            }), 500
+        error_resp = handle_ytdl_error(e)
+        if error_resp:
+            return error_resp
         return jsonify({
             'error': 'Get link failed',
             'details': str(e)
@@ -285,7 +302,7 @@ def download():
                         'preferredcodec': codec,
                         'preferredquality': kbps,
                     }],
-                    # **get_ydl_opts_cookies()
+                    **get_ydl_opts_cookies()
                 }
             else:
                 print("ffmpeg not found for audio. Downloading raw audio stream directly...")
@@ -293,7 +310,7 @@ def download():
                 ydl_opts = {
                     'format': 'bestaudio/best',
                     'outtmpl': output_tmpl,
-                    # **get_ydl_opts_cookies()
+                    **get_ydl_opts_cookies()
                 }
         else:
             output_tmpl = os.path.join(DOWNLOADS_DIR, f'video_{timestamp}.%(ext)s')
@@ -306,7 +323,7 @@ def download():
                     'format': ytdl_format,
                     'outtmpl': output_tmpl,
                     'merge_output_format': ext,
-                    # **get_ydl_opts_cookies()
+                    **get_ydl_opts_cookies()
                 }
             else:
                 print("ffmpeg not found for video. Finding pre-merged format...")
@@ -314,7 +331,7 @@ def download():
                 # Fetch video formats list first
                 extract_opts = {
                     'noplaylist': True,
-                    # **get_ydl_opts_cookies()
+                    **get_ydl_opts_cookies()
                 }
                 info = run_ytdl(extract_opts, lambda ydl: ydl.extract_info(url, download=False))
                 
@@ -345,7 +362,7 @@ def download():
                 ydl_opts = {
                     'format': selected_format_id,
                     'outtmpl': output_tmpl,
-                    # **get_ydl_opts_cookies()
+                    **get_ydl_opts_cookies()
                 }
 
         run_ytdl(ydl_opts, lambda ydl: ydl.download([url]))
@@ -370,23 +387,11 @@ def download():
 
     except Exception as e:
         print(f"Error in download: {e}")
-        err_msg = str(e)
-        # if "confirm you" in err_msg and "not a bot" in err_msg:
-        #     return jsonify({
-        #         'error': (
-        #             'YouTube Sign-In Required!\n\n'
-        #             'YouTube is requesting authentication. Since Chrome/Edge locks its cookies while open, please do one of the following:\n\n'
-        #             '👉 Workaround 1 (Easiest): Open this downloader site (http://127.0.0.1:5000) in Microsoft Edge, then CLOSE Google Chrome completely. Now you can download without any cookie errors!\n\n'
-        #             '👉 Workaround 2: Export your cookies using a browser extension (like "Get cookies.txt LOCALLY") and save the file as "cookies.txt" in the "backend/" folder.'
-        #         ),
-        #         'details': err_msg
-        #     }), 500
-        # return jsonify({
-        #     'error': 'Download failed',
-        #     'details': str(e)
-        # }), 500
+        error_resp = handle_ytdl_error(e)
+        if error_resp:
+            return error_resp
         return jsonify({
-            'error': str(e),
+            'error': 'Download failed',
             'details': str(e)
         }), 500
 
@@ -409,7 +414,16 @@ def seo_insights():
             return jsonify({
                 'optimizedTitle': f"Ultimate Guide: {title} (2026 Tutorial)",
                 'tags': ["#viral", "#guide", "#tutorial", "#tech", "#2026"],
-                'description': f"In this video, we dive deep into {title}. Learn the best strategies and tips to master this topic quickly. Don't forget to like and subscribe for more content!"
+                'description': f"In this video, we dive deep into {title}. Learn the best strategies and tips to master this topic quickly. Don't forget to like and subscribe for more content!",
+                'seoScore': 88,
+                'viralPotential': "High",
+                'trendingScore': 82,
+                'category': "Technology",
+                'suggestedKeywords': ["youtube downloader", "video tools", "saas", "tech guide", "4k downloader"],
+                'bestHashtags': ["#tech", "#tutorial", "#downloader", "#vidvault"],
+                'contentSummary': "An in-depth look and step-by-step tutorial on optimizing your workflow.",
+                'titleAnalysis': "Excellent title structure with strong keywords, but can be improved with emotional triggers.",
+                'uploadDate': "June 19, 2026"
             })
 
         # Call Gemini using Google GenAI library
@@ -417,7 +431,7 @@ def seo_insights():
         from google.genai import types
 
         client = genai.Client(api_key=api_key)
-        prompt = f'Generate SEO metadata for a YouTube video with the title: "{title}". Provide a catchy optimized title, 5 relevant hashtags, and a short engaging description.'
+        prompt = f'Generate SEO analysis and metadata for a YouTube video with the title: "{title}". Return an optimized title, description, keywords, hashtags, an SEO score (0-100), a trending score (0-100), category, viral potential (Low/Medium/High), a brief summary, and a short title analysis.'
 
         response = client.models.generate_content(
             model='gemini-2.5-flash',
@@ -432,9 +446,29 @@ def seo_insights():
                             type=types.Type.ARRAY,
                             items=types.Schema(type=types.Type.STRING)
                         ),
-                        'description': types.Schema(type=types.Type.STRING)
+                        'description': types.Schema(type=types.Type.STRING),
+                        'seoScore': types.Schema(type=types.Type.INTEGER),
+                        'viralPotential': types.Schema(type=types.Type.STRING),
+                        'trendingScore': types.Schema(type=types.Type.INTEGER),
+                        'category': types.Schema(type=types.Type.STRING),
+                        'suggestedKeywords': types.Schema(
+                            type=types.Type.ARRAY,
+                            items=types.Schema(type=types.Type.STRING)
+                        ),
+                        'bestHashtags': types.Schema(
+                            type=types.Type.ARRAY,
+                            items=types.Schema(type=types.Type.STRING)
+                        ),
+                        'contentSummary': types.Schema(type=types.Type.STRING),
+                        'titleAnalysis': types.Schema(type=types.Type.STRING),
+                        'uploadDate': types.Schema(type=types.Type.STRING)
                     },
-                    required=['optimizedTitle', 'tags', 'description']
+                    required=[
+                        'optimizedTitle', 'tags', 'description', 'seoScore', 
+                        'viralPotential', 'trendingScore', 'category', 
+                        'suggestedKeywords', 'bestHashtags', 'contentSummary', 
+                        'titleAnalysis', 'uploadDate'
+                    ]
                 )
             )
         )
@@ -471,14 +505,8 @@ def cleanup_loop():
 
 # Start background thread
 cleanup_thread = threading.Thread(target=cleanup_loop, daemon=True)
-# cleanup_thread.start()
+cleanup_thread.start()
 
-# if __name__ == '__main__':
-#     # Run server locally on port 5000
-#     app.run(host='0.0.0.0', port=5000, debug=True)
-if __name__ == "__main__":
-    cleanup_thread.start()
-
-    port = int(os.environ.get("PORT", 10000))
-    print(f"Starting on PORT {port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+if __name__ == '__main__':
+    # Run server locally on port 5000
+    app.run(host='0.0.0.0', port=5000, debug=True)
