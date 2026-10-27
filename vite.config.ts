@@ -15,10 +15,14 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: 'http://localhost:5000',
           changeOrigin: true,
+          timeout: 600000,
+          proxyTimeout: 600000,
         },
         '/downloads': {
           target: 'http://localhost:5000',
           changeOrigin: true,
+          timeout: 600000,
+          proxyTimeout: 600000,
         }
       }
     },

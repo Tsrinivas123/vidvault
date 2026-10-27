@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node dependencies & build outputs
 node_modules
 dist
 dist-ssr
@@ -22,3 +23,17 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Reports & benchmarks
+FIX_REPORT.md
+PERFORMANCE_REPORT.md
+benchmark_test.py
+
+# Backend media downloads & temporary files
+backend/downloads/
+backend/temp/
+backend/cookies.txt
+backend/.env
+backend/__pycache__/
+*.pyc
+__pycache__/

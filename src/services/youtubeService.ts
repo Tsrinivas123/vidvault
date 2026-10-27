@@ -17,6 +17,7 @@ export interface VideoInfo {
   uploader: string;
   view_count: number;
   formats: VideoFormat[];
+  available_heights: number[];   // NEW: all truly available heights (video-only + merged)
   url: string;
 }
 
@@ -25,7 +26,20 @@ export interface DownloadResponse {
   message?: string;
   downloadUrl?: string;
   filename?: string;
+  filesize?: number;
   directUrl?: string;
+}
+
+export interface DownloadStatus {
+  status: 'starting' | 'downloading' | 'processing' | 'complete' | 'error' | 'unknown';
+  percent: number;
+  stage?: string;
+  speed?: string;
+  eta?: string;
+  filename?: string;
+  filesize?: number;
+  downloadUrl?: string;
+  error?: string;
 }
 
 class YouTubeService {
@@ -94,7 +108,7 @@ class YouTubeService {
       const total = contentLength ? parseInt(contentLength, 10) : 0;
 
       let receivedLength = 0;
-      const chunks: any[] = []; // Fixed: Using any[] to avoid type issues
+      const chunks: any[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -171,26 +185,76 @@ class YouTubeService {
     }
   }
 
-  async downloadVideo(url: string, quality: string, type: 'video' | 'audio', format: string): Promise<DownloadResponse> {
+  /**
+   * Download a video/audio file.
+   * Accepts an optional download_id for progress polling.
+   * Polls /api/download/status/<download_id> every second when download_id is provided.
+   */
+  async downloadVideo(
+    url: string,
+    quality: string,
+    type: 'video' | 'audio',
+    format: string,
+    download_id?: string,
+    onProgress?: (status: DownloadStatus) => void
+  ): Promise<DownloadResponse> {
+    // Start polling if we have an id and a progress callback
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    if (download_id && onProgress) {
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/download/status/${download_id}`);
+          if (res.ok) {
+            const status: DownloadStatus = await res.json();
+            onProgress(status);
+            // Stop polling once terminal states are reached
+            if (status.status === 'complete' || status.status === 'error') {
+              if (pollInterval) clearInterval(pollInterval);
+              pollInterval = null;
+            }
+          }
+        } catch {
+          // swallow polling errors silently
+        }
+      }, 1000);
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/download`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url, quality, type, format }),
+        body: JSON.stringify({ url, quality, type, format, download_id }),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to download');
+        let errJson: any = {};
+        try {
+          errJson = await response.json();
+        } catch {
+          // ignore json parse error
+        }
+        const msg = errJson.details || errJson.error || `Download request failed with status ${response.status}`;
+        throw new Error(msg);
       }
 
       return await response.json();
     } catch (error) {
       console.error('Error in download:', error);
       throw error;
+    } finally {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
     }
+  }
+
+  async getDownloadStatus(download_id: string): Promise<DownloadStatus> {
+    const res = await fetch(`${API_BASE_URL}/download/status/${download_id}`);
+    if (!res.ok) return { status: 'unknown', percent: 0 };
+    return res.json();
   }
 
   isValidYouTubeUrl(url: string): boolean {
