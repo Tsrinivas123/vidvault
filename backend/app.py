@@ -10,6 +10,7 @@ import urllib.parse
 import subprocess
 import shutil
 from flask import Flask, request, jsonify, send_from_directory
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_cors import CORS
 import yt_dlp
 from dotenv import load_dotenv
@@ -35,6 +36,29 @@ COOKIES_PATH = os.path.join(BACKEND_DIR, 'cookies.txt')
 # Ensure directories exist
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
+
+# Purge any orphaned temporary files from previous server crashes/restarts
+try:
+    if os.path.exists(TEMP_DIR):
+        for f in os.listdir(TEMP_DIR):
+            p = os.path.join(TEMP_DIR, f)
+            if os.path.isfile(p):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+except Exception:
+    pass
+
+# Initialize cookies from YT_COOKIES environment variable if provided (for cloud deployments)
+yt_cookies_env = os.environ.get('YT_COOKIES')
+if yt_cookies_env and not os.path.exists(COOKIES_PATH):
+    try:
+        with open(COOKIES_PATH, 'w', encoding='utf-8') as f:
+            f.write(yt_cookies_env)
+        print("[VidVault] Initialized cookies from YT_COOKIES environment variable.", flush=True)
+    except Exception as e:
+        print(f"[VidVault] Failed to initialize cookies from env: {e}", flush=True)
 
 # -----------------------------------------------------------------------
 # Thread-safe download tracking & concurrency control
@@ -107,8 +131,21 @@ def sanitize_filename(title: str, max_len: int = 60) -> str:
     clean = re.sub(r'[^a-zA-Z0-9._-]+', '_', norm).strip('._- ')
     return clean[:max_len] or 'video'
 
-FFMPEG_BIN = shutil.which('ffmpeg') or r'C:\Users\tusha\AppData\Local\Programs\Python\Python313\Scripts\ffmpeg.exe'
-FFMPEG_DIR = os.path.dirname(FFMPEG_BIN) if os.path.exists(FFMPEG_BIN) else None
+FFMPEG_BIN = shutil.which('ffmpeg')
+if not FFMPEG_BIN:
+    for candidate in [
+        r'C:\Users\tusha\AppData\Local\Programs\Python\Python313\Scripts\ffmpeg.exe',
+        os.path.expanduser('~/bin/ffmpeg'),
+        '/usr/local/bin/ffmpeg',
+        '/usr/bin/ffmpeg'
+    ]:
+        if os.path.exists(candidate):
+            FFMPEG_BIN = candidate
+            break
+if not FFMPEG_BIN:
+    FFMPEG_BIN = 'ffmpeg'
+
+FFMPEG_DIR = os.path.dirname(FFMPEG_BIN) if (os.path.isabs(FFMPEG_BIN) and os.path.exists(FFMPEG_BIN)) else None
 
 def inspect_media_file(filepath: str):
     """Inspects a media file using ffmpeg to verify duration, video & audio streams."""
@@ -267,15 +304,32 @@ DIST_DIR = os.path.join(ROOT_DIR, 'dist')
 STATIC_FOLDER = DIST_DIR if os.path.exists(DIST_DIR) else ROOT_DIR
 app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='')
 
-CORS(app, resources={r"/api/*": {
-    "origins": [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-        "https://vidvault-frontend.onrender.com"
-    ]
-}}, supports_credentials=True)
+# Apply ProxyFix for proper header handling behind Render / Vercel / Railway reverse proxies
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    # Specific production domain and preview deployments for VidVault (prevents arbitrary origin access)
+    re.compile(r"^https://vidvault.*\.vercel\.app$"),
+    re.compile(r"^https://.*vidvault.*\.onrender\.com$"),
+]
+
+FRONTEND_URL = os.environ.get('FRONTEND_URL', '').strip()
+if FRONTEND_URL:
+    for u in FRONTEND_URL.split(','):
+        u_clean = u.strip().rstrip('/')
+        if u_clean and u_clean not in allowed_origins:
+            allowed_origins.append(u_clean)
+
+allow_all = os.environ.get('ALLOW_ALL_ORIGINS', '').lower() in ('true', '1')
+
+CORS(app, resources={
+    r"/api/*": {"origins": "*" if allow_all else allowed_origins},
+    r"/downloads/*": {"origins": "*" if allow_all else allowed_origins}
+}, supports_credentials=True)
 
 # -----------------------------------------------------------------------
 # Static File & Downloads Serving
@@ -301,15 +355,14 @@ def serve_download(filename):
 # -----------------------------------------------------------------------
 @app.route('/api', methods=['GET'])
 @app.route('/api/', methods=['GET'])
+@app.route('/health', methods=['GET'])
 def health_check():
-    import shutil
-    has_ffmpeg = shutil.which('ffmpeg') is not None or os.path.exists(
-        r'C:\Users\tusha\AppData\Local\Programs\Python\Python313\Scripts\ffmpeg.exe'
-    )
+    has_ffmpeg = (shutil.which('ffmpeg') is not None) or (bool(FFMPEG_DIR) and os.path.exists(FFMPEG_BIN))
     return jsonify({
-        'status': 'Backend Running',
+        'status': 'healthy',
+        'service': 'VidVault Backend API',
         'cookiesLoaded': os.path.exists(COOKIES_PATH),
-        'ffmpegAvailable': has_ffmpeg
+        'ffmpegAvailable': bool(has_ffmpeg)
     })
 
 # -----------------------------------------------------------------------
@@ -571,7 +624,13 @@ def download():
             raise Exception("Failed to finalize output file in downloads directory.")
 
         final_file_size = os.path.getsize(final_filepath)
-        download_url = f"{request.url_root}downloads/{urllib.parse.quote(final_filename)}"
+        public_url = os.environ.get('PUBLIC_BACKEND_URL', '').rstrip('/')
+        if public_url:
+            download_url = f"{public_url}/downloads/{urllib.parse.quote(final_filename)}"
+        else:
+            scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
+            host = request.headers.get('X-Forwarded-Host', request.host)
+            download_url = f"{scheme}://{host}/downloads/{urllib.parse.quote(final_filename)}"
 
         # Mark progress status as complete
         _set_progress(
@@ -730,4 +789,6 @@ cleanup_thread = threading.Thread(target=cleanup_loop, daemon=True)
 cleanup_thread.start()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() in ('true', '1')
+    app.run(host='0.0.0.0', port=port, debug=debug)

@@ -1,5 +1,19 @@
 // services/youtubeService.ts
-const API_BASE_URL = '/api';
+export const BACKEND_URL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+export const API_BASE_URL = BACKEND_URL ? `${BACKEND_URL}/api` : '/api';
+
+/**
+ * Resolves a download URL (which may be relative like '/downloads/...' or absolute)
+ * to the proper backend domain in production.
+ */
+export function resolveMediaUrl(url: string): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+    return url;
+  }
+  const cleanPath = url.startsWith('/') ? url : `/${url}`;
+  return BACKEND_URL ? `${BACKEND_URL}${cleanPath}` : cleanPath;
+}
 
 
 export interface VideoFormat {
@@ -93,7 +107,8 @@ class YouTubeService {
     onProgress: (progress: number) => void
   ): Promise<void> {
     try {
-      const response = await fetch(directUrl);
+      const targetUrl = resolveMediaUrl(directUrl);
+      const response = await fetch(targetUrl);
       
       if (!response.ok) {
         throw new Error('Download failed');
@@ -242,6 +257,22 @@ class YouTubeService {
       return await response.json();
     } catch (error) {
       console.error('Error in download:', error);
+      // Resilience check: if backend finished despite network/proxy timeout
+      if (download_id) {
+        try {
+          const finalStatus = await this.getDownloadStatus(download_id);
+          if (finalStatus.status === 'complete' && finalStatus.downloadUrl) {
+            return {
+              success: true,
+              downloadUrl: finalStatus.downloadUrl,
+              filename: finalStatus.filename,
+              filesize: finalStatus.filesize
+            };
+          }
+        } catch {
+          // ignore status lookup error
+        }
+      }
       throw error;
     } finally {
       if (pollInterval) {

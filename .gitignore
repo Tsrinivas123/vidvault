@@ -33,6 +33,10 @@ benchmark_test.py
 backend/downloads/
 backend/temp/
 backend/cookies.txt
+# Environment files & secrets
+.env
+.env.*
+*.env
 backend/.env
 backend/__pycache__/
 *.pyc

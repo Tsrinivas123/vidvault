@@ -52,7 +52,7 @@ import {
 
 } from 'lucide-react';
 
-import { youtubeService, DownloadStatus } from '../services/youtubeService';
+import { youtubeService, DownloadStatus, resolveMediaUrl } from '../services/youtubeService';
 
 import { SEOInsight } from '../types';
 
@@ -403,7 +403,7 @@ const Hero: React.FC = () => {
 
         const link = document.createElement('a');
 
-        link.href = response.downloadUrl;
+        link.href = resolveMediaUrl(response.downloadUrl);
 
         const safeTitle = videoData.title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50);
 
