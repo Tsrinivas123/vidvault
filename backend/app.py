@@ -31,7 +31,41 @@ BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(BACKEND_DIR, '..'))
 DOWNLOADS_DIR = os.path.join(BACKEND_DIR, 'downloads')
 TEMP_DIR = os.path.join(BACKEND_DIR, 'temp')
-COOKIES_PATH = os.path.join(BACKEND_DIR, 'cookies.txt')
+# Cookie paths and priority resolution:
+# 1. Custom path from YT_COOKIES_PATH or COOKIES_PATH environment variables
+# 2. Render Secret File mounted at /etc/secrets/cookies.txt
+# 3. Local development file at backend/cookies.txt
+RENDER_SECRET_COOKIES = '/etc/secrets/cookies.txt'
+LOCAL_COOKIES_PATH = os.path.join(BACKEND_DIR, 'cookies.txt')
+
+def is_valid_cookie_file(path) -> bool:
+    """Check if a path exists, is a regular file, is readable, and is non-empty without reading full contents."""
+    try:
+        if not path or not os.path.isfile(path):
+            return False
+        if os.path.getsize(path) <= 0:
+            return False
+        # Test basic read permission without reading full file or logging
+        with open(path, 'rb') as f:
+            f.read(1)
+        return True
+    except (OSError, IOError, PermissionError):
+        return False
+
+def get_active_cookie_file():
+    """
+    Resolve active cookie file strictly in priority order:
+    1. Valid custom path from YT_COOKIES_PATH or COOKIES_PATH.
+    2. Valid Render Secret File at /etc/secrets/cookies.txt.
+    3. Valid local file at backend/cookies.txt.
+    Returns the absolute path if valid, readable, and non-empty; otherwise None.
+    """
+    custom_path = os.environ.get('YT_COOKIES_PATH') or os.environ.get('COOKIES_PATH')
+    candidates = [custom_path, RENDER_SECRET_COOKIES, LOCAL_COOKIES_PATH]
+    for candidate in candidates:
+        if candidate and is_valid_cookie_file(candidate):
+            return os.path.abspath(candidate)
+    return None
 
 # Ensure directories exist
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
@@ -50,15 +84,31 @@ try:
 except Exception:
     pass
 
-# Initialize cookies from YT_COOKIES environment variable if provided (for cloud deployments)
-yt_cookies_env = os.environ.get('YT_COOKIES')
-if yt_cookies_env and not os.path.exists(COOKIES_PATH):
-    try:
-        with open(COOKIES_PATH, 'w', encoding='utf-8') as f:
-            f.write(yt_cookies_env)
-        print("[VidVault] Initialized cookies from YT_COOKIES environment variable.", flush=True)
-    except Exception as e:
-        print(f"[VidVault] Failed to initialize cookies from env: {e}", flush=True)
+# Initialize cookies from YT_COOKIES environment variable if provided
+yt_cookies_env = (os.environ.get('YT_COOKIES') or '').strip()
+if yt_cookies_env:
+    # Never overwrite Render Secret File or any existing valid cookie file
+    if not get_active_cookie_file():
+        try:
+            # Avoid unnecessary disk writes if local file already has identical content
+            should_write = True
+            if os.path.exists(LOCAL_COOKIES_PATH):
+                try:
+                    with open(LOCAL_COOKIES_PATH, 'r', encoding='utf-8') as f:
+                        if f.read().strip() == yt_cookies_env:
+                            should_write = False
+                except Exception:
+                    pass
+
+            if should_write:
+                with open(LOCAL_COOKIES_PATH, 'w', encoding='utf-8') as f:
+                    f.write(yt_cookies_env)
+                print("[VidVault] Initialized local cookies from YT_COOKIES environment variable.", flush=True)
+        except Exception as e:
+            print(f"[VidVault] Warning: Failed to write cookies to local file: {e}", flush=True)
+
+# Expose COOKIES_PATH for backwards-compatibility
+COOKIES_PATH = get_active_cookie_file() or LOCAL_COOKIES_PATH
 
 # -----------------------------------------------------------------------
 # Thread-safe download tracking & concurrency control
@@ -117,8 +167,9 @@ def get_ydl_opts_cookies():
     }
     if FFMPEG_DIR:
         opts['ffmpeg_location'] = FFMPEG_DIR
-    if os.path.exists(COOKIES_PATH):
-        opts['cookiefile'] = COOKIES_PATH
+    active_cookie_file = get_active_cookie_file()
+    if active_cookie_file:
+        opts['cookiefile'] = active_cookie_file
     else:
         cookies_browser = os.environ.get('YT_COOKIES_FROM_BROWSER')
         if cookies_browser:
@@ -361,7 +412,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'VidVault Backend API',
-        'cookiesLoaded': os.path.exists(COOKIES_PATH),
+        'cookiesLoaded': bool(get_active_cookie_file() is not None),
         'ffmpegAvailable': bool(has_ffmpeg)
     })
 
