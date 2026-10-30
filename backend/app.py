@@ -9,6 +9,8 @@ import unicodedata
 import urllib.parse
 import subprocess
 import shutil
+import tempfile
+import stat
 from flask import Flask, request, jsonify, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_cors import CORS
@@ -17,6 +19,8 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
+
 
 try:
     if hasattr(sys.stdout, 'reconfigure'):
@@ -67,6 +71,34 @@ def get_active_cookie_file():
             return os.path.abspath(candidate)
     return None
 
+def get_safe_cookiefile():
+    """
+    Returns a writable cookiefile path for yt-dlp.
+    If the active cookie file is read-only (such as /etc/secrets/cookies.txt on Render),
+    creates a writable session copy in TEMP_DIR so yt-dlp can safely read and write cookies
+    without modifying or attempting to write to the read-only secret file.
+    """
+    active = get_active_cookie_file()
+    if not active:
+        return None
+
+    # If the file is already writable, use it directly (e.g. local backend/cookies.txt)
+    if os.access(active, os.W_OK) and not active.startswith('/etc/secrets'):
+        return active
+
+    # If the file is read-only (e.g. Render Secret File), maintain a writable session copy in TEMP_DIR
+    session_copy = os.path.join(TEMP_DIR, 'session_cookies.txt')
+    try:
+        if not os.path.exists(session_copy) or os.path.getmtime(active) > os.path.getmtime(session_copy):
+            shutil.copyfile(active, session_copy)
+            try:
+                os.chmod(session_copy, stat.S_IREAD | stat.S_IWRITE)
+            except OSError:
+                pass
+        return session_copy
+    except Exception:
+        return active
+
 # Ensure directories exist
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
@@ -89,23 +121,32 @@ yt_cookies_env = (os.environ.get('YT_COOKIES') or '').strip()
 if yt_cookies_env:
     # Never overwrite Render Secret File or any existing valid cookie file
     if not get_active_cookie_file():
-        try:
-            # Avoid unnecessary disk writes if local file already has identical content
-            should_write = True
-            if os.path.exists(LOCAL_COOKIES_PATH):
-                try:
-                    with open(LOCAL_COOKIES_PATH, 'r', encoding='utf-8') as f:
-                        if f.read().strip() == yt_cookies_env:
-                            should_write = False
-                except Exception:
-                    pass
-
-            if should_write:
-                with open(LOCAL_COOKIES_PATH, 'w', encoding='utf-8') as f:
-                    f.write(yt_cookies_env)
-                print("[VidVault] Initialized local cookies from YT_COOKIES environment variable.", flush=True)
-        except Exception as e:
-            print(f"[VidVault] Warning: Failed to write cookies to local file: {e}", flush=True)
+        # Target only writable paths; never attempt to write to /etc/secrets/
+        candidate_write_paths = [
+            LOCAL_COOKIES_PATH,
+            os.path.join(TEMP_DIR, 'cookies.txt'),
+            os.path.join(tempfile.gettempdir(), 'vidvault_cookies.txt')
+        ]
+        for target_path in candidate_write_paths:
+            if target_path.startswith('/etc/secrets'):
+                continue
+            try:
+                should_write = True
+                if os.path.exists(target_path):
+                    try:
+                        with open(target_path, 'r', encoding='utf-8') as f:
+                            if f.read().strip() == yt_cookies_env:
+                                should_write = False
+                    except Exception:
+                        pass
+                if should_write:
+                    with open(target_path, 'w', encoding='utf-8') as f:
+                        f.write(yt_cookies_env)
+                    print("[VidVault] Initialized local cookies from YT_COOKIES environment variable.", flush=True)
+                LOCAL_COOKIES_PATH = target_path
+                break
+            except (OSError, IOError, PermissionError):
+                continue
 
 # Expose COOKIES_PATH for backwards-compatibility
 COOKIES_PATH = get_active_cookie_file() or LOCAL_COOKIES_PATH
@@ -154,6 +195,7 @@ def _get_progress(download_id: str):
 # Helpers
 # -----------------------------------------------------------------------
 def get_ydl_opts_cookies():
+    node_conf = {'path': NODE_BIN} if NODE_BIN else {}
     opts = {
         'socket_timeout': 30,
         'retries': 5,
@@ -162,12 +204,17 @@ def get_ydl_opts_cookies():
         'concurrent_fragment_downloads': 8,  # 8 concurrent DASH/HLS fragment workers
         'buffersize': 1024 * 1024,    # 1 MB buffer for fast I/O throughput
         'skip_unavailable_fragments': True,
-        'js_runtimes': {'node': {}},  # Use Node.js runtime for YouTube cipher decryption
+        'js_runtimes': {
+            'node': node_conf,
+            'deno': {},
+            'bun': {},
+            'quickjs': {}
+        },
         'noplaylist': True,
     }
     if FFMPEG_DIR:
         opts['ffmpeg_location'] = FFMPEG_DIR
-    active_cookie_file = get_active_cookie_file()
+    active_cookie_file = get_safe_cookiefile()
     if active_cookie_file:
         opts['cookiefile'] = active_cookie_file
     else:
@@ -197,6 +244,21 @@ if not FFMPEG_BIN:
     FFMPEG_BIN = 'ffmpeg'
 
 FFMPEG_DIR = os.path.dirname(FFMPEG_BIN) if (os.path.isabs(FFMPEG_BIN) and os.path.exists(FFMPEG_BIN)) else None
+
+# Node.js binary discovery for yt-dlp JavaScript challenge solving (requires Node.js >= 22.0.0)
+NODE_BIN = shutil.which('node') or shutil.which('nodejs')
+if not NODE_BIN:
+    for candidate in [
+        os.path.expanduser('~/bin/node'),
+        '/usr/local/bin/node',
+        '/usr/bin/node'
+    ]:
+        if os.path.exists(candidate):
+            NODE_BIN = candidate
+            candidate_dir = os.path.dirname(candidate)
+            if candidate_dir not in os.environ.get('PATH', ''):
+                os.environ['PATH'] = candidate_dir + os.pathsep + os.environ.get('PATH', '')
+            break
 
 def inspect_media_file(filepath: str):
     """Inspects a media file using ffmpeg to verify duration, video & audio streams."""
@@ -307,6 +369,10 @@ def run_ytdl(ydl_opts, action_fn, *args, **kwargs):
 
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
+            # Ensure save_cookies is disabled if cookiefile is in read-only location or not writable
+            cookiefile = opts.get('cookiefile')
+            if cookiefile and (str(cookiefile).startswith('/etc/secrets') or not os.access(cookiefile, os.W_OK)):
+                ydl.save_cookies = lambda: None
             return action_fn(ydl, *args, **kwargs)
     except Exception as e:
         err_msg = str(e)
@@ -315,11 +381,12 @@ def run_ytdl(ydl_opts, action_fn, *args, **kwargs):
             "Could not copy", "Permission denied", "database is locked",
             "sharing violation", "Failed to decrypt", "Requested format is not available",
             "format is not available", "no longer valid", "expired", "Sign in",
-            "invalid Netscape", "failed to load cookies", "CookieLoadError"
+            "invalid Netscape", "failed to load cookies", "CookieLoadError",
+            "Read-only file system", "Errno 30"
         ])
 
         if has_cookies and should_fallback:
-            print(f"Warning: Cookie access failed or format not available. Retrying without cookies... Error: {e}")
+            print(f"Warning: Cookie access failed or format not available. Retrying without cookies... Error: {e}", flush=True)
             fallback_opts = opts.copy()
             fallback_opts.pop('cookiesfrombrowser', None)
             fallback_opts.pop('cookiefile', None)
@@ -412,8 +479,10 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'VidVault Backend API',
+        'cookiesFilePresent': bool(get_active_cookie_file() is not None),
         'cookiesLoaded': bool(get_active_cookie_file() is not None),
-        'ffmpegAvailable': bool(has_ffmpeg)
+        'ffmpegAvailable': bool(has_ffmpeg),
+        'nodeAvailable': bool(NODE_BIN and shutil.which(NODE_BIN))
     })
 
 # -----------------------------------------------------------------------
@@ -552,18 +621,20 @@ def download():
             if kbps not in ['128', '192', '320']:
                 kbps = '320'
 
+            # Resilient audio format chain: prefer AAC m4a, then any audio stream, then progressive stream audio
+            audio_format = 'bestaudio[ext=m4a]/bestaudio/best[vcodec=none]/best'
+
             if codec == 'm4a':
-                # Direct download without re-encoding (YouTube native AAC stream in m4a container)
                 ydl_opts = {
-                    'format': 'bestaudio[ext=m4a]/bestaudio',
+                    'format': audio_format,
                     'outtmpl': temp_output_tmpl,
                     'progress_hooks': [progress_hook],
                     **get_ydl_opts_cookies()
                 }
             elif has_ffmpeg:
-                # Fast multithreaded MP3 encoding from best AAC source
+                # Fast multithreaded MP3 encoding from best available audio stream
                 ydl_opts = {
-                    'format': 'bestaudio[ext=m4a]/bestaudio/best',
+                    'format': audio_format,
                     'outtmpl': temp_output_tmpl,
                     'postprocessors': [{
                         'key': 'FFmpegExtractAudio',
@@ -578,18 +649,27 @@ def download():
                 }
             else:
                 ydl_opts = {
-                    'format': 'bestaudio/best',
+                    'format': audio_format,
                     'outtmpl': temp_output_tmpl,
                     'progress_hooks': [progress_hook],
                     **get_ydl_opts_cookies()
                 }
         else:
             ext = fmt if fmt in ['mp4', 'webm'] else 'mp4'
+            q = quality.replace('p', '') if quality else None
 
             if has_ffmpeg:
-                q = quality.replace('p', '') if quality else None
                 if q:
-                    # Comprehensive fallback chain preferring H.264 (avc1) + AAC (m4a) for universal playback
+                    # Robust format chain with graceful fallbacks:
+                    # 1. Exact height with MP4/AVC1 + AAC
+                    # 2. Exact height with any video + AAC
+                    # 3. Exact height with any video + best audio
+                    # 4. Best video <= requested height (MP4/AVC1 + AAC)
+                    # 5. Best video <= requested height (any video + audio)
+                    # 6. Progressive stream <= requested height (combined video+audio file)
+                    # 7. Best combined stream <= requested height
+                    # 8. Best separate video + audio of any resolution
+                    # 9. Absolute best available stream
                     ytdl_format = (
                         f"bestvideo[height={q}][vcodec^=avc1][ext=mp4]+bestaudio[ext=m4a]/"
                         f"bestvideo[height={q}][ext=mp4]+bestaudio[ext=m4a]/"
@@ -597,8 +677,11 @@ def download():
                         f"bestvideo[height={q}]+bestaudio/"
                         f"bestvideo[height<={q}][vcodec^=avc1][ext=mp4]+bestaudio[ext=m4a]/"
                         f"bestvideo[height<={q}][ext=mp4]+bestaudio[ext=m4a]/"
+                        f"bestvideo[height<={q}]+bestaudio[ext=m4a]/"
                         f"bestvideo[height<={q}]+bestaudio/"
+                        f"best[height<={q}][vcodec!=none][acodec!=none]/"
                         f"best[height<={q}]/"
+                        f"bestvideo+bestaudio/"
                         f"best"
                     )
                 else:
@@ -606,23 +689,26 @@ def download():
                         "bestvideo[vcodec^=avc1][ext=mp4]+bestaudio[ext=m4a]/"
                         "bestvideo[ext=mp4]+bestaudio[ext=m4a]/"
                         "bestvideo+bestaudio[ext=m4a]/"
-                        "bestvideo+bestaudio/best"
+                        "bestvideo+bestaudio/"
+                        "best[vcodec!=none][acodec!=none]/"
+                        "best"
                     )
 
                 ydl_opts = {
                     'format': ytdl_format,
                     'outtmpl': temp_output_tmpl,
                     'merge_output_format': ext,
-                    'postprocessor_args': {
-                        'merger': ['-c', 'copy']  # Efficient direct stream copy (no re-encoding)
-                    },
                     'progress_hooks': [progress_hook],
                     **get_ydl_opts_cookies()
                 }
             else:
-                # Fallback when FFmpeg is not installed
+                # Robust fallback when FFmpeg is not installed (prefers progressive streams)
+                no_ffmpeg_fmt = (
+                    f"best[height<={q}][vcodec!=none][acodec!=none]/best[height<={q}]/best"
+                    if q else "best[vcodec!=none][acodec!=none]/best"
+                )
                 ydl_opts = {
-                    'format': 'best',
+                    'format': no_ffmpeg_fmt,
                     'outtmpl': temp_output_tmpl,
                     'progress_hooks': [progress_hook],
                     **get_ydl_opts_cookies()
@@ -659,12 +745,31 @@ def download():
         media_info = inspect_media_file(temp_downloaded_file)
         print(f"  * Media Verified: {media_info}", flush=True)
 
-        # Build clean final filename with safe alphanumeric title, quality label, and extension
+        # Determine actual delivered resolution to avoid falsely claiming higher quality
+        actual_height = None
+        if info_dict:
+            req_fmts = info_dict.get('requested_formats') or []
+            for f in req_fmts:
+                if f.get('vcodec') != 'none' and f.get('height'):
+                    actual_height = f.get('height')
+                    break
+            if not actual_height:
+                actual_height = info_dict.get('height')
+
+        if not actual_height and media_info and media_info.get('video_stream'):
+            m = re.search(r'(\d{3,4})x(\d{3,4})', media_info['video_stream'])
+            if m:
+                actual_height = int(m.group(2))
+
+        delivered_quality = f"{actual_height}p" if (media_type != 'audio' and actual_height) else (
+            f"{kbps}kbps" if media_type == 'audio' else quality or 'video'
+        )
+
+        # Build clean final filename with safe alphanumeric title, actual quality label, and extension
         _, final_ext = os.path.splitext(temp_downloaded_file)
         final_ext = final_ext.lstrip('.') or ('mp3' if media_type == 'audio' else 'mp4')
         clean_title = sanitize_filename(video_title, max_len=50)
-        quality_tag = quality if quality else ('audio' if media_type == 'audio' else 'video')
-        final_filename = f"{clean_title}_{quality_tag}_{timestamp}.{final_ext}"
+        final_filename = f"{clean_title}_{delivered_quality}_{timestamp}.{final_ext}"
         final_filepath = os.path.join(DOWNLOADS_DIR, final_filename)
 
         # Move atomically from temporary staging to final downloads directory
@@ -693,12 +798,15 @@ def download():
             filename=final_filename,
             filesize=final_file_size,
             downloadUrl=download_url,
-            media_info=media_info
+            media_info=media_info,
+            delivered_quality=delivered_quality,
+            requested_quality=quality
         )
 
         print(f"[VidVault] [DOWNLOAD SUCCESS]", flush=True)
-        print(f"  * File: {final_filename} ({final_file_size:,} bytes)", flush=True)
-        print(f"  * URL:  {download_url}", flush=True)
+        print(f"  * File:      {final_filename} ({final_file_size:,} bytes)", flush=True)
+        print(f"  * Delivered: {delivered_quality} (Requested: {quality})", flush=True)
+        print(f"  * URL:       {download_url}", flush=True)
         print(f"{'='*55}\n", flush=True)
 
         return jsonify({
@@ -706,7 +814,9 @@ def download():
             'downloadUrl': download_url,
             'filename': final_filename,
             'filesize': final_file_size,
-            'media_info': media_info
+            'media_info': media_info,
+            'delivered_quality': delivered_quality,
+            'requested_quality': quality
         })
 
     except Exception as e:
