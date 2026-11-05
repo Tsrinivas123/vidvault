@@ -199,11 +199,10 @@ def get_ydl_opts_cookies():
     node_conf = {'path': NODE_BIN} if NODE_BIN else {}
     opts = {
         'socket_timeout': 30,
-        'retries': 5,
-        'fragment_retries': 5,
-        'http_chunk_size': 10485760,  # 10 MB chunks to prevent Google Video rate limiting
-        'concurrent_fragment_downloads': 8,  # 8 concurrent DASH/HLS fragment workers
-        'buffersize': 1024 * 1024,    # 1 MB buffer for fast I/O throughput
+        'retries': 3,
+        'fragment_retries': 3,
+        'concurrent_fragment_downloads': 4,  # 4 workers optimal for 512MB RAM on Render
+        'buffersize': 262144,                # 256 KB buffer keeps memory footprint light and avoids CPU swap
         'skip_unavailable_fragments': True,
         'js_runtimes': {
             'node': node_conf,
@@ -490,7 +489,7 @@ def serve_download(filename):
     if not safe_name or not os.path.exists(target_path):
         return jsonify({'error': 'File not found on server', 'filename': safe_name}), 404
 
-    return send_from_directory(DOWNLOADS_DIR, safe_name, as_attachment=True)
+    return send_from_directory(DOWNLOADS_DIR, safe_name, as_attachment=True, conditional=True)
 
 # -----------------------------------------------------------------------
 # Health Check Endpoint
@@ -722,6 +721,9 @@ def download():
                     'format': ytdl_format,
                     'outtmpl': temp_output_tmpl,
                     'merge_output_format': ext,
+                    'postprocessor_args': {
+                        'merger': ['-c', 'copy']
+                    },
                     'progress_hooks': [progress_hook],
                     **get_ydl_opts_cookies()
                 }
