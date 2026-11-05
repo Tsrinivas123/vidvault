@@ -211,6 +211,7 @@ def get_ydl_opts_cookies():
             'bun': {},
             'quickjs': {}
         },
+        'remote_components': ['ejs:github'],
         'noplaylist': True,
     }
     if FFMPEG_DIR:
@@ -380,8 +381,8 @@ def run_ytdl(ydl_opts, action_fn, *args, **kwargs):
         has_cookies = 'cookiesfrombrowser' in opts or 'cookiefile' in opts
         should_fallback = any(msg in err_msg for msg in [
             "Could not copy", "Permission denied", "database is locked",
-            "sharing violation", "Failed to decrypt", "Requested format is not available",
-            "format is not available", "no longer valid", "expired", "Sign in",
+            "sharing violation", "Failed to decrypt",
+            "no longer valid", "expired",
             "invalid Netscape", "failed to load cookies", "CookieLoadError",
             "Read-only file system", "Errno 30",
             "HTTP Error 403", "403: Forbidden", "Forbidden",
@@ -389,7 +390,7 @@ def run_ytdl(ydl_opts, action_fn, *args, **kwargs):
         ])
 
         if has_cookies and should_fallback:
-            print(f"Warning: Cookie access failed or format not available. Retrying without cookies... Error: {e}", flush=True)
+            print(f"Warning: Cookie authentication issue encountered. Retrying without cookies... Error: {e}", flush=True)
             fallback_opts = opts.copy()
             fallback_opts.pop('cookiesfrombrowser', None)
             fallback_opts.pop('cookiefile', None)
@@ -399,24 +400,40 @@ def run_ytdl(ydl_opts, action_fn, *args, **kwargs):
 
 def handle_ytdl_error(e):
     err_msg = str(e)
+
+    # 1. Check if video is deleted, private, or unavailable on YouTube
+    is_unavailable = any(msg in err_msg for msg in [
+        "This video is unavailable",
+        "Video unavailable",
+        "Private video",
+        "This video has been removed",
+        "does not exist"
+    ])
+    if is_unavailable:
+        return jsonify({
+            'error': 'This YouTube video is unavailable, private, or has been removed by the creator.',
+            'details': err_msg
+        }), 404
+
+    # 2. Check for YouTube bot verification or expired session cookies
     is_cookie_auth_issue = any(msg in err_msg for msg in [
         "confirm you",
         "not a bot",
-        "Requested format is not available",
-        "format is not available",
         "Sign in to confirm",
         "Sign in to check",
         "HTTP Error 403",
         "403: Forbidden",
         "Forbidden",
+        "HTTP Error 429",
+        "Too Many Requests",
         "unable to download video data"
     ])
     if is_cookie_auth_issue:
         return jsonify({
             'error': (
-                'YouTube Authentication / Stream Access Error (HTTP 403 Forbidden)!\n\n'
-                'YouTube rejected the video stream signature or expired session cookies.\n\n'
-                'Workaround: If you provided cookies, export a fresh "cookies.txt" file using the "Get cookies.txt LOCALLY" extension while signed in, or retry without cookies.'
+                'YouTube Bot Verification / Cookie Error!\n\n'
+                'YouTube is requiring authentication or has rate-limited requests from this IP.\n\n'
+                'Workaround: Export a fresh "cookies.txt" file using the "Get cookies.txt LOCALLY" extension while signed in to YouTube, and update your cookies in Render Secret Files or the backend folder.'
             ),
             'details': err_msg
         }), 500
