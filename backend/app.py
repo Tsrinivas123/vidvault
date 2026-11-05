@@ -7,11 +7,12 @@ import json
 import traceback
 import unicodedata
 import urllib.parse
+import urllib.request
 import subprocess
 import shutil
 import tempfile
 import stat
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_cors import CORS
 import yt_dlp
@@ -382,7 +383,9 @@ def run_ytdl(ydl_opts, action_fn, *args, **kwargs):
             "sharing violation", "Failed to decrypt", "Requested format is not available",
             "format is not available", "no longer valid", "expired", "Sign in",
             "invalid Netscape", "failed to load cookies", "CookieLoadError",
-            "Read-only file system", "Errno 30"
+            "Read-only file system", "Errno 30",
+            "HTTP Error 403", "403: Forbidden", "Forbidden",
+            "unable to download video data"
         ])
 
         if has_cookies and should_fallback:
@@ -402,14 +405,18 @@ def handle_ytdl_error(e):
         "Requested format is not available",
         "format is not available",
         "Sign in to confirm",
-        "Sign in to check"
+        "Sign in to check",
+        "HTTP Error 403",
+        "403: Forbidden",
+        "Forbidden",
+        "unable to download video data"
     ])
     if is_cookie_auth_issue:
         return jsonify({
             'error': (
-                'YouTube Authentication / Cookie Error!\n\n'
-                'YouTube is blocking the request or requesting authentication. This usually happens if your cookies have expired or Chrome locks its cookie database.\n\n'
-                'Workaround: Export a fresh "cookies.txt" file using a browser extension (like "Get cookies.txt LOCALLY") and place it in the backend folder.'
+                'YouTube Authentication / Stream Access Error (HTTP 403 Forbidden)!\n\n'
+                'YouTube rejected the video stream signature or expired session cookies.\n\n'
+                'Workaround: If you provided cookies, export a fresh "cookies.txt" file using the "Get cookies.txt LOCALLY" extension while signed in, or retry without cookies.'
             ),
             'details': err_msg
         }), 500
@@ -914,6 +921,55 @@ def seo_insights():
             'error': 'SEO generation failed',
             'details': str(e)
         }), 500
+
+@app.route('/api/download-thumbnail', methods=['GET'])
+def download_thumbnail():
+    video_id = request.args.get('id', '').strip()
+    quality = request.args.get('quality', 'maxres').strip().lower()
+    title = request.args.get('title', 'thumbnail').strip()
+
+    if not video_id:
+        return jsonify({'error': 'Missing video id'}), 400
+
+    # Sanitize title for filename
+    safe_title = re.sub(r'[^a-zA-Z0-9_\- ]', '', title).replace(' ', '_')[:50] or 'thumbnail'
+
+    # Fallback ladder for thumbnail qualities
+    quality_map = {
+        'maxres': ['maxresdefault.jpg', 'sddefault.jpg', 'hqdefault.jpg', 'mqdefault.jpg'],
+        'sd': ['sddefault.jpg', 'hqdefault.jpg', 'mqdefault.jpg'],
+        'hq': ['hqdefault.jpg', 'mqdefault.jpg'],
+        'mq': ['mqdefault.jpg', 'default.jpg']
+    }
+
+    candidates = quality_map.get(quality, quality_map['maxres'])
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
+
+    img_data = None
+    for fname in candidates:
+        url = f"https://i.ytimg.com/vi/{video_id}/{fname}"
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                if resp.status == 200:
+                    img_data = resp.read()
+                    break
+        except Exception:
+            continue
+
+    if not img_data:
+        return jsonify({'error': 'Thumbnail could not be retrieved from YouTube'}), 404
+
+    return Response(
+        img_data,
+        mimetype='image/jpeg',
+        headers={
+            'Content-Disposition': f'attachment; filename="{safe_title}_thumbnail_{quality}.jpg"',
+            'Cache-Control': 'public, max-age=86400'
+        }
+    )
 
 # -----------------------------------------------------------------------
 # Background Cleanup

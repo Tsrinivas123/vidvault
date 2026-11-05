@@ -1,12 +1,19 @@
-/* src/index.css - Global Anime Cyberpunk Styling */
+/* css/style.css - VidVault Cyberpunk Styling */
 
 :root {
   --primary: 328 100% 59%;
-  /* Neon Pink */
   --secondary: 190 100% 45%;
-  /* Cyan */
   --accent: 271 100% 65%;
-  /* Purple */
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #0a0519;
+  font-family: 'Inter', sans-serif;
+  color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 /* Glassmorphism custom classes */
@@ -24,7 +31,12 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 25px rgba(6, 182, 212, 0.25) !important;
 }
 
-/* Smooth background parallax setup */
+.glass-input {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Fixed ambient background & canvas */
 .space-background {
   position: fixed;
   inset: 0;
@@ -55,29 +67,49 @@
   z-index: 1;
 }
 
-/* Custom CSS micro-animations & Tailwind extends */
+/* Animations */
 @keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-12px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
 }
 
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background-color: #0a0519;
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
-#root {
-  min-height: 100vh;
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 6s ease infinite;
 }
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s ease-out forwards;
+}
+
+/* Utility classes */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+

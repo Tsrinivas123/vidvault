@@ -1,116 +1,861 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VidVault | Professional Video Downloader</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VidVault | Professional YouTube Video & Audio Downloader</title>
+  <meta name="description" content="Download YouTube videos and audio in high quality 4K, 1080p, 720p MP4 and 320kbps MP3. Fast, free, secure, and powered with AI content insights." />
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              850: '#151e2e',
+              950: '#020617',
             },
-            colors: {
-              slate: {
-                850: '#151e2e',
-                950: '#020617',
-              },
-              primary: {
-                50: '#f0f9ff',
-                100: '#e0f2fe',
-                500: '#0ea5e9',
-                600: '#0284c7',
-                700: '#0369a1',
-                900: '#0c4a6e',
-              },
-              cyan: {
-                400: '#22d3ee',
-                500: '#06b6d4',
-                900: '#164e63',
-              }
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
             },
-            animation: {
-              blob: "blob 10s infinite",
-              'pulse-slow': "pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-              'float': "float 6s ease-in-out infinite",
-              'twinkle': "twinkle 4s ease-in-out infinite",
-              'flow': "flow 15s ease-in-out infinite",
-              'shimmer': "shimmer 2s linear infinite",
-              'fade-in-up': "fadeInUp 0.8s ease-out forwards",
+            cyan: {
+              400: '#22d3ee',
+              500: '#06b6d4',
+              900: '#164e63',
+            }
+          },
+          animation: {
+            blob: "blob 10s infinite",
+            'pulse-slow': "pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            'float': "float 6s ease-in-out infinite",
+            'twinkle': "twinkle 4s ease-in-out infinite",
+            'flow': "flow 15s ease-in-out infinite",
+            'shimmer': "shimmer 2s linear infinite",
+            'fade-in-up': "fadeInUp 0.8s ease-out forwards",
+          },
+          keyframes: {
+            blob: {
+              "0%": { transform: "translate(0px, 0px) scale(1)" },
+              "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+              "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+              "100%": { transform: "translate(0px, 0px) scale(1)" },
             },
-            keyframes: {
-              blob: {
-                "0%": {
-                  transform: "translate(0px, 0px) scale(1)",
-                },
-                "33%": {
-                  transform: "translate(30px, -50px) scale(1.1)",
-                },
-                "66%": {
-                  transform: "translate(-20px, 20px) scale(0.9)",
-                },
-                "100%": {
-                  transform: "translate(0px, 0px) scale(1)",
-                },
-              },
-              float: {
-                "0%, 100%": { transform: "translateY(0)" },
-                "50%": { transform: "translateY(-20px)" },
-              },
-              twinkle: {
-                "0%, 100%": { opacity: "1", transform: "scale(1)" },
-                "50%": { opacity: "0.3", transform: "scale(0.8)" },
-              },
-              flow: {
-                "0%, 100%": { backgroundPosition: "0% 50%" },
-                "50%": { backgroundPosition: "100% 50%" },
-              },
-              shimmer: {
-                "0%": { transform: "translateX(-100%)" },
-                "100%": { transform: "translateX(100%)" },
-              },
-              fadeInUp: {
-                "0%": { opacity: "0", transform: "translateY(30px)" },
-                "100%": { opacity: "1", transform: "translateY(0)" },
-              }
+            float: {
+              "0%, 100%": { transform: "translateY(0)" },
+              "50%": { transform: "translateY(-20px)" },
             },
+            twinkle: {
+              "0%, 100%": { opacity: "1", transform: "scale(1)" },
+              "50%": { opacity: "0.3", transform: "scale(0.8)" },
+            },
+            flow: {
+              "0%, 100%": { backgroundPosition: "0% 50%" },
+              "50%": { backgroundPosition: "100% 50%" },
+            },
+            shimmer: {
+              "0%": { transform: "translateX(-100%)" },
+              "100%": { transform: "translateX(100%)" },
+            },
+            fadeInUp: {
+              "0%": { opacity: "0", transform: "translateY(30px)" },
+              "100%": { opacity: "1", transform: "translateY(0)" },
+            }
           }
         }
       }
-    </script>
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        -webkit-font-smoothing: antialiased;
-      }
-      .glass-card {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-      }
-      .glass-input {
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
-  }
-}
-</script>
+    };
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
 </head>
-  <body class="bg-slate-50 text-slate-900">
-    <div id="root"></div>
-    <script type="module" src="/src/index.tsx"></script>
-  </body>
+
+<body class="relative min-h-screen bg-[#0a0519] flex flex-col font-sans text-slate-200 selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden">
+
+  <!-- ========================================================== -->
+  <!-- 🌌 IMMERSIVE FIXED BACKGROUND & CANVAS ENGINE              -->
+  <!-- ========================================================== -->
+  <div class="space-background">
+    <div class="space-gradient"></div>
+    <canvas id="ambient-canvas"></canvas>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- 🚀 NAVIGATION BAR                                         -->
+  <!-- ========================================================== -->
+  <nav class="fixed w-full z-50 transition-all duration-300 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-20">
+        <!-- Logo -->
+        <div class="flex items-center">
+          <a href="#" class="flex-shrink-0 flex items-center gap-2 cursor-pointer group">
+            <div class="relative">
+              <div class="absolute inset-0 bg-cyan-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+              <i data-lucide="play-square" class="relative h-8 w-8 text-cyan-400"></i>
+            </div>
+            <span class="font-bold text-xl tracking-tight text-white group-hover:text-cyan-50 transition-colors">VidVault</span>
+          </a>
+        </div>
+
+        <!-- Desktop Links -->
+        <div class="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-8">
+          <a href="#" class="text-cyan-400 px-3 py-2 text-sm font-medium border-b-2 border-cyan-500/50">Downloader</a>
+          <a href="#features" class="text-slate-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">Features</a>
+          <a href="#how-it-works" class="text-slate-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">How It Works</a>
+          <a href="#faq" class="text-slate-300 hover:text-white px-3 py-2 text-sm font-medium transition-colors">FAQ</a>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <div class="-mr-2 flex items-center sm:hidden">
+          <button id="mobile-menu-btn" class="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none">
+            <span class="sr-only">Open main menu</span>
+            <i data-lucide="menu" class="block h-6 w-6"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown -->
+    <div id="mobile-menu" class="hidden sm:hidden bg-slate-950/95 backdrop-blur-lg border-b border-white/10">
+      <div class="pt-2 pb-3 space-y-1">
+        <a href="#" class="bg-slate-800 text-white block pl-3 pr-4 py-2 border-l-4 border-cyan-500 text-base font-medium">Downloader</a>
+        <a href="#features" class="border-transparent text-slate-400 hover:bg-slate-800 hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Features</a>
+        <a href="#how-it-works" class="border-transparent text-slate-400 hover:bg-slate-800 hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium">How It Works</a>
+        <a href="#faq" class="border-transparent text-slate-400 hover:bg-slate-800 hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium">FAQ</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========================================================== -->
+  <!-- ⚡ MAIN HERO SECTION & DOWNLOADER INTERFACE               -->
+  <!-- ========================================================== -->
+  <main class="flex-grow relative z-10 pt-24">
+    <div class="relative min-h-[85vh] flex flex-col justify-center pt-8 pb-20">
+      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
+
+        <!-- Top Pill Tag -->
+        <div class="animate-fade-in-up">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/20 border border-cyan-500/20 backdrop-blur-md mb-8 hover:bg-cyan-950/40 transition-colors cursor-default shadow-[0_0_15px_-5px_rgba(6,182,212,0.2)]">
+            <span class="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_#22d3ee]"></span>
+            <span class="text-xs font-semibold text-cyan-200 tracking-wider uppercase">VidVault v2.0 Live</span>
+          </div>
+        </div>
+
+        <!-- Hero Headline -->
+        <h1 class="text-5xl sm:text-7xl font-bold tracking-tight text-white mb-6 drop-shadow-2xl animate-fade-in-up">
+          YouTube Video <br class="hidden sm:block" />
+          <span class="relative text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 animate-gradient-x bg-[size:200%_auto]">
+            Downloader
+          </span>
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="mt-4 text-lg sm:text-xl text-slate-400 max-w-2xl mb-12 font-light leading-relaxed animate-fade-in-up">
+          Paste the link below to <span class="text-cyan-200 font-medium">instantly</span> save videos in 
+          <span class="inline-flex items-center mx-2 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs align-middle text-slate-300">4K</span> 
+          <span class="inline-flex items-center px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs align-middle text-slate-300">HD</span>
+        </p>
+
+        <!-- Main Search / URL Input Box -->
+        <div class="w-full max-w-4xl mx-auto relative group z-20 animate-fade-in-up">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[98%] h-[80%] bg-cyan-500/20 blur-[50px] rounded-full opacity-50 pointer-events-none"></div>
+
+          <div class="relative rounded-[20px] bg-slate-900/80 backdrop-blur-xl border border-white/10 p-2 shadow-2xl transition-all duration-300">
+            <div class="flex flex-col sm:flex-row gap-2">
+              <div class="relative flex-grow group/input">
+                <div class="absolute -inset-[1.5px] rounded-xl bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 opacity-0 group-focus-within/input:opacity-100 blur-[2px] transition-opacity duration-500"></div>
+
+                <div class="relative h-16 rounded-xl bg-slate-950 border border-white/5 group-focus-within/input:border-transparent flex items-center overflow-hidden transition-all duration-300">
+                  <div class="pl-5 pr-3 text-slate-500 group-focus-within/input:text-cyan-400 transition-colors">
+                    <i data-lucide="link" class="h-5 w-5"></i>
+                  </div>
+                  <input
+                    id="url-input"
+                    type="text"
+                    placeholder="Paste YouTube Video Link here..."
+                    class="block w-full h-full bg-transparent border-none text-white placeholder-slate-500 focus:ring-0 focus:outline-none font-medium text-lg pr-4"
+                  />
+                </div>
+              </div>
+
+              <button
+                id="btn-process"
+                class="group/btn relative min-w-[180px] h-16 rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform active:scale-[0.98] cursor-pointer"
+              >
+                <div class="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 transition-transform duration-300 group-hover/btn:scale-105"></div>
+                <div class="absolute inset-0 -translate-x-full group-hover/btn:animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent z-10 skew-x-12"></div>
+                <div class="relative z-20 flex items-center justify-center gap-2 text-white font-bold tracking-wide text-lg h-full">
+                  <span>Download</span>
+                  <div class="bg-white/20 p-1.5 rounded-lg group-hover/btn:bg-white/30 transition-colors">
+                    <i data-lucide="arrow-right" class="w-5 h-5 group-hover/btn:translate-x-1 transition-transform"></i>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Feature badges below input -->
+          <div class="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-3 px-4 animate-fade-in-up">
+            <div class="flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-300 transition-colors cursor-default group">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-cyan-500 group-hover:drop-shadow-[0_0_5px_rgba(6,182,212,0.5)] transition-all"></i>
+              <span>Unlimited</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-300 transition-colors cursor-default group">
+              <i data-lucide="shield" class="w-4 h-4 text-cyan-500 group-hover:drop-shadow-[0_0_5px_rgba(6,182,212,0.5)] transition-all"></i>
+              <span>Secure</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-300 transition-colors cursor-default group">
+              <i data-lucide="zap" class="w-4 h-4 text-cyan-500 group-hover:drop-shadow-[0_0_5px_rgba(6,182,212,0.5)] transition-all"></i>
+              <span>Fast</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================================================== -->
+        <!-- ⏳ LOADING PULSING SKELETON                           -->
+        <!-- ==================================================== -->
+        <div id="loading-skeleton" class="hidden mt-16 w-full max-w-4xl animate-pulse z-10">
+          <div class="glass-card rounded-[24px] overflow-hidden border border-white/10 p-6 shadow-2xl relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+
+            <div class="flex flex-col md:flex-row gap-6 mb-8 text-left">
+              <div class="md:w-5/12 aspect-video rounded-xl bg-white/5 border border-white/5"></div>
+              <div class="md:w-7/12 flex flex-col justify-center space-y-4">
+                <div class="h-6 w-3/4 bg-white/10 rounded-md"></div>
+                <div class="h-4 w-1/2 bg-white/5 rounded-md"></div>
+                <div class="flex gap-2">
+                  <div class="h-5 w-16 bg-cyan-500/10 rounded-full"></div>
+                  <div class="h-5 w-16 bg-purple-500/10 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div>
+                <div class="h-5 w-40 bg-white/10 rounded-md mb-3"></div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div class="h-16 bg-white/5 rounded-xl border border-white/5"></div>
+                  <div class="h-16 bg-white/5 rounded-xl border border-white/5"></div>
+                  <div class="h-16 bg-white/5 rounded-xl border border-white/5"></div>
+                  <div class="h-16 bg-white/5 rounded-xl border border-white/5"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================================================== -->
+        <!-- 🎯 DYNAMIC RESULTS CARD INTERFACE                     -->
+        <!-- ==================================================== -->
+        <div id="results-card" class="hidden mt-16 w-full max-w-4xl space-y-6 z-10">
+
+          <!-- Main Result Container -->
+          <div class="glass-card rounded-[24px] overflow-hidden border border-white/10 shadow-[0_0_50px_-10px_rgba(0,0,0,0.5)] transition-all duration-300">
+
+            <!-- Video Information Header -->
+            <div class="flex flex-col md:flex-row p-6 gap-6 bg-gradient-to-b from-white/5 to-transparent">
+
+              <!-- Thumbnail Container -->
+              <div class="md:w-5/12 relative group overflow-hidden rounded-xl border border-white/10 aspect-video self-start">
+                <img id="video-thumb" src="" alt="Thumbnail" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <div class="absolute inset-0 bg-slate-950/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                  <i data-lucide="play-square" class="text-cyan-400 w-12 h-12 drop-shadow-[0_0_10px_#22d3ee] scale-90 group-hover:scale-100 transition-transform duration-300"></i>
+                </div>
+                <!-- Quick Download Thumbnail Button -->
+                <button id="btn-quick-thumb" title="Quick Download HD Thumbnail" class="absolute top-3 right-3 p-1.5 px-2.5 rounded-lg bg-black/75 hover:bg-emerald-950/80 border border-white/10 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 transition-all opacity-0 group-hover:opacity-100 backdrop-blur-md cursor-pointer z-10 flex items-center gap-1.5 text-xs font-semibold shadow-lg">
+                  <i data-lucide="image-down" class="w-3.5 h-3.5"></i>
+                  <span>Save HD</span>
+                </button>
+                <!-- Duration Badge -->
+                <div id="video-duration" class="absolute bottom-3 right-3 px-2 py-1 rounded bg-black/80 backdrop-blur-sm text-xs font-mono text-slate-300 border border-white/10">0:00</div>
+              </div>
+
+              <!-- Details Container -->
+              <div class="md:w-7/12 flex flex-col justify-between text-left">
+                <div>
+                  <div class="flex items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2">
+                      <span class="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]"></span>
+                      <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Ready to Download</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <button id="btn-copy-info" title="Copy Video Info" class="p-2 rounded-lg bg-white/5 border border-white/10 hover:border-cyan-500/50 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400 transition-all cursor-pointer">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                      </button>
+                      <button id="btn-share" title="Share Link" class="p-2 rounded-lg bg-white/5 border border-white/10 hover:border-purple-500/50 hover:bg-purple-950/40 text-slate-400 hover:text-purple-400 transition-all cursor-pointer">
+                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <h3 id="video-title" class="text-xl sm:text-2xl font-bold text-white line-clamp-2 leading-snug drop-shadow-md mb-2">Video Title</h3>
+                  <p class="text-sm text-slate-400 mb-4 flex items-center gap-1.5">
+                    <span class="h-1.5 w-1.5 rounded-full bg-slate-500"></span>
+                    Channel: <span id="video-channel" class="text-slate-300 font-medium">Channel Name</span>
+                  </p>
+                </div>
+
+                <!-- Live Download Status Progress Box -->
+                <div id="download-status-box" class="hidden mb-4 bg-slate-950/90 p-3.5 rounded-xl border border-cyan-500/40 shadow-[0_0_20px_-5px_rgba(6,182,212,0.4)]">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-slate-200 flex items-center gap-2 font-medium">
+                      <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-cyan-400"></i>
+                      <span id="download-stage-text">Downloading...</span>
+                      <span id="download-speed-text" class="text-emerald-400 font-mono text-[11px] font-semibold"></span>
+                    </span>
+                    <div class="flex items-center gap-2">
+                      <span id="download-eta-text" class="text-[11px] text-slate-400 font-mono"></span>
+                      <span id="download-percent-text" class="text-xs text-cyan-400 font-bold font-mono">0%</span>
+                    </div>
+                  </div>
+                  <div class="h-2 bg-slate-900 rounded-full overflow-hidden border border-white/10">
+                    <div id="download-progress-bar" class="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 shadow-[0_0_8px_#22d3ee] transition-all duration-300 w-0"></div>
+                  </div>
+                </div>
+
+                <!-- Download Error Banner -->
+                <div id="download-error-box" class="hidden mb-4 bg-rose-950/40 p-3.5 rounded-xl border border-rose-500/50 text-rose-200 text-xs flex items-start justify-between gap-3 shadow-[0_0_15px_-5px_rgba(244,63,94,0.3)]">
+                  <div class="flex items-start gap-2.5">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                      <div class="font-semibold text-rose-300 mb-0.5">Download Issue</div>
+                      <div id="download-error-msg" class="text-[11px] text-rose-200/90 whitespace-pre-line leading-relaxed"></div>
+                    </div>
+                  </div>
+                  <button id="btn-close-error" class="text-rose-400 hover:text-white p-1 rounded-lg hover:bg-rose-900/50 transition-colors">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+
+                <!-- Toggle AI Insights -->
+                <div class="flex gap-3">
+                  <button id="btn-toggle-insights" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-300 transition-all shadow-md active:scale-95 cursor-pointer">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span>Hide AI Insights</span>
+                    <i data-lucide="chevron-up" class="chevron-icon w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Grids: Formats -->
+            <div class="p-6 border-t border-white/5 space-y-6">
+
+              <!-- Video Downloads (MP4) -->
+              <div class="text-left">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <i data-lucide="video" class="w-4 h-4 text-cyan-400"></i>
+                  <span>🎥 Video Downloads (MP4)</span>
+                </h4>
+                <div id="video-formats-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+              </div>
+
+              <!-- Audio Downloads (MP3) -->
+              <div class="text-left">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <i data-lucide="music" class="w-4 h-4 text-purple-400"></i>
+                  <span>🎵 Audio Downloads (MP3)</span>
+                </h4>
+                <div id="audio-formats-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+              </div>
+
+              <!-- Thumbnail Downloads (JPG) -->
+              <div class="text-left">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i>
+                  <span>🖼️ Thumbnail Downloads (JPG)</span>
+                </h4>
+                <div id="thumbnail-formats-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+              </div>
+            </div>
+
+            <!-- Card Footer -->
+            <div class="bg-slate-950/60 p-4 px-6 border-t border-white/5 flex justify-between items-center backdrop-blur-md">
+              <div class="flex items-center gap-2">
+                <div class="relative flex h-2.5 w-2.5">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
+                </div>
+                <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Fast Server Merge Enabled</span>
+              </div>
+              <button id="btn-download-best" class="text-cyan-400 text-sm font-semibold hover:text-cyan-300 flex items-center gap-2 transition-colors group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                <span>Download Best Video</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- ================================================== -->
+          <!-- 🤖 AI CONTENT INSIGHTS CARD                        -->
+          <!-- ================================================== -->
+          <div id="insights-container" class="glass-card rounded-[24px] border border-white/10 p-6 shadow-2xl relative overflow-hidden transition-all duration-500">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+            <div class="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+
+            <div class="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
+              <div class="flex items-center gap-2.5">
+                <div class="p-2 rounded-xl bg-cyan-500/10 text-cyan-400">
+                  <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+                <div class="text-left">
+                  <h3 class="text-lg font-bold text-white flex items-center gap-2">🤖 AI Content Insights</h3>
+                  <p class="text-xs text-slate-400">Smart Video Metadata Analysis</p>
+                </div>
+              </div>
+              <div id="insights-loading" class="hidden flex items-center gap-1.5 text-xs text-cyan-400 font-semibold bg-cyan-500/5 px-2.5 py-1 rounded-lg border border-cyan-500/20">
+                <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                Analyzing...
+              </div>
+            </div>
+
+            <div id="insights-content" class="space-y-6 text-left">
+              <!-- Scores Row -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- SEO Score -->
+                <div class="bg-slate-950/40 rounded-2xl p-4 border border-white/5 flex items-center justify-between gap-4">
+                  <div>
+                    <span class="text-xs font-semibold text-slate-400 block mb-1">SEO Score</span>
+                    <span id="seo-score-val" class="text-2xl font-black text-white">85%</span>
+                    <span class="text-[10px] text-emerald-400 font-medium block mt-1">Excellent Optimization</span>
+                  </div>
+                  <div class="relative flex items-center justify-center">
+                    <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" class="text-slate-800" stroke-width="10" stroke="currentColor" fill="none" />
+                      <circle id="seo-score-circle" cx="50" cy="50" r="40" class="text-cyan-400 transition-all duration-1000 ease-out" stroke-width="10" stroke-dasharray="251.2" stroke-dashoffset="37.68" stroke-linecap="round" stroke="currentColor" fill="none" />
+                    </svg>
+                    <i data-lucide="award" class="absolute w-6 h-6 text-cyan-400 drop-shadow-[0_0_5px_rgba(6,182,212,0.5)]"></i>
+                  </div>
+                </div>
+
+                <!-- Trending Score -->
+                <div class="bg-slate-950/40 rounded-2xl p-4 border border-white/5 flex items-center justify-between gap-4">
+                  <div>
+                    <span class="text-xs font-semibold text-slate-400 block mb-1">Trending Potential</span>
+                    <span id="trending-score-val" class="text-2xl font-black text-white">78%</span>
+                    <span class="text-[10px] text-purple-400 font-medium block mt-1">Strong Market Search</span>
+                  </div>
+                  <div class="relative flex items-center justify-center">
+                    <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" class="text-slate-800" stroke-width="10" stroke="currentColor" fill="none" />
+                      <circle id="trending-score-circle" cx="50" cy="50" r="40" class="text-purple-400 transition-all duration-1000 ease-out" stroke-width="10" stroke-dasharray="251.2" stroke-dashoffset="55.2" stroke-linecap="round" stroke="currentColor" fill="none" />
+                    </svg>
+                    <i data-lucide="trending-up" class="absolute w-6 h-6 text-purple-400 drop-shadow-[0_0_5px_rgba(168,85,247,0.5)]"></i>
+                  </div>
+                </div>
+
+                <!-- Viral Potential -->
+                <div class="bg-slate-950/40 rounded-2xl p-4 border border-white/5 flex flex-col justify-between">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <span class="text-xs font-semibold text-slate-400 block">Viral Potential</span>
+                      <span id="viral-potential-val" class="text-xl font-bold text-white mt-1">Medium</span>
+                    </div>
+                    <span id="viral-badge" class="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border bg-amber-500/10 border-amber-500/20 text-amber-400">Medium Range</span>
+                  </div>
+                  <div class="mt-4 space-y-1">
+                    <div class="flex justify-between text-[9px] text-slate-500 font-mono">
+                      <span>STABILITY</span>
+                      <span>VIRAL</span>
+                    </div>
+                    <div class="h-2 bg-slate-900 rounded-full overflow-hidden border border-white/5 relative">
+                      <div id="viral-bar" class="h-full transition-all duration-1000 bg-gradient-to-r from-blue-500 to-amber-500 w-[60%]"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Optimized Title -->
+              <div class="bg-slate-950/20 rounded-2xl p-5 border border-white/5 space-y-3 relative group overflow-hidden">
+                <div class="absolute top-0 left-0 w-[3px] h-full bg-cyan-500"></div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    OPTIMIZED TITLE (HIGH CTR)
+                  </span>
+                  <button id="btn-copy-title" class="text-slate-500 hover:text-cyan-400 transition-colors p-1 cursor-pointer" title="Copy Title">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+                <p id="optimized-title-text" class="text-base font-bold text-white tracking-wide">"Optimized Video Title"</p>
+                <p id="title-analysis-text" class="text-xs text-slate-400 italic font-medium">💡 High-performing title with search keywords.</p>
+              </div>
+
+              <!-- Keywords & Hashtags Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-slate-950/30 rounded-2xl p-4 border border-white/5 space-y-3">
+                  <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase">
+                    <i data-lucide="hash" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    Suggested SEO Keywords
+                  </span>
+                  <div id="suggested-keywords" class="flex flex-wrap gap-1.5"></div>
+                </div>
+
+                <div class="bg-slate-950/30 rounded-2xl p-4 border border-white/5 space-y-3">
+                  <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase">
+                    <i data-lucide="hash" class="w-3.5 h-3.5 text-purple-400"></i>
+                    Best Hashtags
+                  </span>
+                  <div id="best-hashtags" class="flex flex-wrap gap-1.5"></div>
+                </div>
+              </div>
+
+              <!-- Video Metadata Breakdown Table -->
+              <div class="bg-slate-950/40 rounded-2xl p-5 border border-white/5 space-y-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                  <div>
+                    <span class="text-slate-500 block">Category</span>
+                    <span id="insight-category" class="text-slate-300 font-semibold mt-0.5 block">Education</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-500 block">Creator</span>
+                    <span id="insight-creator" class="text-slate-300 font-semibold mt-0.5 block">Creator</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-500 block">Analyzed Date</span>
+                    <span id="insight-date" class="text-slate-300 font-semibold mt-0.5 block">Today</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-500 block">Duration</span>
+                    <span id="insight-duration" class="text-slate-300 font-semibold mt-0.5 block">0:00</span>
+                  </div>
+                </div>
+
+                <div class="border-t border-white/5 pt-4">
+                  <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase mb-2">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    Content Summary
+                  </span>
+                  <p id="content-summary-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed font-light"></p>
+                </div>
+
+                <div class="border-t border-white/5 pt-4">
+                  <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase mb-2">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5 text-purple-400"></i>
+                    Optimized Description
+                  </span>
+                  <p id="optimized-desc-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed font-light whitespace-pre-line bg-slate-950/20 p-3 rounded-xl border border-white/5"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- 🌟 FEATURES SECTION                                        -->
+    <!-- ========================================================== -->
+    <section id="features" class="relative bg-transparent py-24 sm:py-32 overflow-hidden border-t border-white/5">
+      <div class="relative mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center mb-20">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/30 border border-cyan-500/20 mb-8 backdrop-blur-md">
+            <i data-lucide="users" class="w-4 h-4 text-cyan-400"></i>
+            <span class="text-xs font-bold text-cyan-100 tracking-wide uppercase">Used by 100,000+ Users</span>
+          </div>
+          <h2 class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-6 drop-shadow-xl">
+            Fastest <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">Video Downloader</span>
+          </h2>
+          <p class="text-lg text-slate-400 leading-relaxed max-w-xl mx-auto">
+            Download directly from your browser without installing software. A trustworthy and reliable tool.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <!-- Card 1 -->
+          <div class="group relative rounded-2xl glass-card p-8 hover:-translate-y-1 hover:border-cyan-500/50">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            <div class="relative z-10">
+              <div class="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 group-hover:border-cyan-500/50 group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-cyan-500/20">
+                <i data-lucide="zap" class="h-7 w-7 text-cyan-400 group-hover:text-cyan-300 drop-shadow-lg"></i>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-50 transition-colors">Super Fast Speed</h3>
+              <p class="text-slate-400 leading-relaxed text-sm group-hover:text-slate-300 transition-colors">Our system is lightning fast. Video downloads start instantly without any waiting time.</p>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="group relative rounded-2xl glass-card p-8 hover:-translate-y-1 hover:border-cyan-500/50">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            <div class="relative z-10">
+              <div class="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 group-hover:border-cyan-500/50 group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-cyan-500/20">
+                <i data-lucide="shield" class="h-7 w-7 text-cyan-400 group-hover:text-cyan-300 drop-shadow-lg"></i>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-50 transition-colors">100% Safe & Secure</h3>
+              <p class="text-slate-400 leading-relaxed text-sm group-hover:text-slate-300 transition-colors">Your privacy is our priority. We do not store any personal user data on our servers.</p>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="group relative rounded-2xl glass-card p-8 hover:-translate-y-1 hover:border-cyan-500/50">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            <div class="relative z-10">
+              <div class="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 group-hover:border-cyan-500/50 group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-cyan-500/20">
+                <i data-lucide="ban" class="h-7 w-7 text-cyan-400 group-hover:text-cyan-300 drop-shadow-lg"></i>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-50 transition-colors">No Pop-up Ads</h3>
+              <p class="text-slate-400 leading-relaxed text-sm group-hover:text-slate-300 transition-colors">Clean experience. No need to worry about annoying ads. A completely smooth interface.</p>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="group relative rounded-2xl glass-card p-8 hover:-translate-y-1 hover:border-cyan-500/50">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            <div class="relative z-10">
+              <div class="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 group-hover:border-cyan-500/50 group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-cyan-500/20">
+                <i data-lucide="smartphone" class="h-7 w-7 text-cyan-400 group-hover:text-cyan-300 drop-shadow-lg"></i>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-50 transition-colors">All Devices Support</h3>
+              <p class="text-slate-400 leading-relaxed text-sm group-hover:text-slate-300 transition-colors">Mobile, Tablet, Laptop - this downloader works perfectly on all browsers and devices.</p>
+            </div>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="group relative rounded-2xl glass-card p-8 hover:-translate-y-1 hover:border-cyan-500/50">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            <div class="relative z-10">
+              <div class="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 group-hover:border-cyan-500/50 group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-cyan-500/20">
+                <i data-lucide="sliders" class="h-7 w-7 text-cyan-400 group-hover:text-cyan-300 drop-shadow-lg"></i>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-50 transition-colors">High Quality Options</h3>
+              <p class="text-slate-400 leading-relaxed text-sm group-hover:text-slate-300 transition-colors">Select your preferred quality: 1080p, 720p, 4K, or just high-quality Audio (MP3).</p>
+            </div>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="group relative rounded-2xl glass-card p-8 hover:-translate-y-1 hover:border-cyan-500/50">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            <div class="relative z-10">
+              <div class="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 group-hover:border-cyan-500/50 group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-cyan-500/20">
+                <i data-lucide="dollar-sign" class="h-7 w-7 text-cyan-400 group-hover:text-cyan-300 drop-shadow-lg"></i>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-50 transition-colors">Lifetime Free</h3>
+              <p class="text-slate-400 leading-relaxed text-sm group-hover:text-slate-300 transition-colors">Download unlimited videos completely for free. No hidden charges or subscriptions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- 📋 HOW IT WORKS (3 SIMPLE STEPS)                           -->
+    <!-- ========================================================== -->
+    <section id="how-it-works" class="relative bg-transparent py-24 sm:py-32 border-t border-white/5 border-b">
+      <div class="relative mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center mb-16">
+          <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">How It Works?</h2>
+          <p class="mt-4 text-lg text-slate-400">Download videos in just 3 simple steps.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+          <!-- Step 1 -->
+          <div class="relative group p-8 rounded-2xl glass-card hover:border-cyan-500/50">
+            <div class="text-6xl font-black text-white/5 absolute top-4 right-6 select-none group-hover:text-white/10 transition-colors">01</div>
+            <div class="relative z-10">
+              <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center mb-6 shadow-lg shadow-cyan-500/20">
+                <span class="text-white font-bold text-xl">01</span>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">Copy Link</h3>
+              <p class="text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">Go to the YouTube app or browser and copy the link (URL) of your favorite video.</p>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="relative group p-8 rounded-2xl glass-card hover:border-cyan-500/50">
+            <div class="text-6xl font-black text-white/5 absolute top-4 right-6 select-none group-hover:text-white/10 transition-colors">02</div>
+            <div class="relative z-10">
+              <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center mb-6 shadow-lg shadow-cyan-500/20">
+                <span class="text-white font-bold text-xl">02</span>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">Paste Link</h3>
+              <p class="text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">Come back to the website and paste the video link in the input box above.</p>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="relative group p-8 rounded-2xl glass-card hover:border-cyan-500/50">
+            <div class="text-6xl font-black text-white/5 absolute top-4 right-6 select-none group-hover:text-white/10 transition-colors">03</div>
+            <div class="relative z-10">
+              <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center mb-6 shadow-lg shadow-cyan-500/20">
+                <span class="text-white font-bold text-xl">03</span>
+              </div>
+              <h3 class="text-xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">Download</h3>
+              <p class="text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">Select your preferred format and quality, then click the download button. That's it!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- ❓ FAQ ACCORDION SECTION                                   -->
+    <!-- ========================================================== -->
+    <section id="faq" class="bg-transparent py-24 sm:py-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="mx-auto max-w-4xl divide-y divide-white/10">
+          <h2 class="text-2xl font-bold leading-10 tracking-tight text-white mb-10 text-center">Frequently Asked Questions (FAQ)</h2>
+          <dl class="mt-10 space-y-6 divide-y divide-white/10">
+
+            <!-- Question 1 -->
+            <div class="pt-6 group faq-item">
+              <dt>
+                <button class="faq-btn flex w-full items-start justify-between text-left text-white cursor-pointer">
+                  <span class="text-base font-semibold leading-7 group-hover:text-cyan-400 transition-colors">Is VidVault free?</span>
+                  <span class="ml-6 flex h-7 items-center">
+                    <i data-lucide="chevron-up" class="faq-icon h-6 w-6 text-cyan-400"></i>
+                  </span>
+                </button>
+              </dt>
+              <dd class="faq-answer mt-2 pr-12">
+                <p class="text-base leading-7 text-slate-400">Yes, this tool is completely free. You can download as many videos as you want without any charges.</p>
+              </dd>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="pt-6 group faq-item">
+              <dt>
+                <button class="faq-btn flex w-full items-start justify-between text-left text-white cursor-pointer">
+                  <span class="text-base font-semibold leading-7 group-hover:text-cyan-400 transition-colors">Is it safe and secure?</span>
+                  <span class="ml-6 flex h-7 items-center">
+                    <i data-lucide="chevron-down" class="faq-icon h-6 w-6 text-slate-400 group-hover:text-cyan-400"></i>
+                  </span>
+                </button>
+              </dt>
+              <dd class="faq-answer hidden mt-2 pr-12">
+                <p class="text-base leading-7 text-slate-400">Yes, it is 100% safe. We do not store any personal data or video history. You can use it without worry.</p>
+              </dd>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="pt-6 group faq-item">
+              <dt>
+                <button class="faq-btn flex w-full items-start justify-between text-left text-white cursor-pointer">
+                  <span class="text-base font-semibold leading-7 group-hover:text-cyan-400 transition-colors">Does it work on mobile?</span>
+                  <span class="ml-6 flex h-7 items-center">
+                    <i data-lucide="chevron-down" class="faq-icon h-6 w-6 text-slate-400 group-hover:text-cyan-400"></i>
+                  </span>
+                </button>
+              </dt>
+              <dd class="faq-answer hidden mt-2 pr-12">
+                <p class="text-base leading-7 text-slate-400">Yes, this website works perfectly on Mobile (Android & iOS), Tablets, and Desktop browsers.</p>
+              </dd>
+            </div>
+
+            <!-- Question 4 -->
+            <div class="pt-6 group faq-item">
+              <dt>
+                <button class="faq-btn flex w-full items-start justify-between text-left text-white cursor-pointer">
+                  <span class="text-base font-semibold leading-7 group-hover:text-cyan-400 transition-colors">Is login required?</span>
+                  <span class="ml-6 flex h-7 items-center">
+                    <i data-lucide="chevron-down" class="faq-icon h-6 w-6 text-slate-400 group-hover:text-cyan-400"></i>
+                  </span>
+                </button>
+              </dt>
+              <dd class="faq-answer hidden mt-2 pr-12">
+                <p class="text-base leading-7 text-slate-400">No, you can download videos directly without any login or signup. No account is needed.</p>
+              </dd>
+            </div>
+
+            <!-- Question 5 -->
+            <div class="pt-6 group faq-item">
+              <dt>
+                <button class="faq-btn flex w-full items-start justify-between text-left text-white cursor-pointer">
+                  <span class="text-base font-semibold leading-7 group-hover:text-cyan-400 transition-colors">Which formats are supported?</span>
+                  <span class="ml-6 flex h-7 items-center">
+                    <i data-lucide="chevron-down" class="faq-icon h-6 w-6 text-slate-400 group-hover:text-cyan-400"></i>
+                  </span>
+                </button>
+              </dt>
+              <dd class="faq-answer hidden mt-2 pr-12">
+                <p class="text-base leading-7 text-slate-400">You can download videos in high-quality MP4 formats (from 360p up to 4K), and crystal clear audio in MP3 format.</p>
+              </dd>
+            </div>
+
+          </dl>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========================================================== -->
+  <!-- 🛡️ FOOTER                                                  -->
+  <!-- ========================================================== -->
+  <footer class="bg-black/45 backdrop-blur-md border-t border-white/10" aria-labelledby="footer-heading">
+    <h2 id="footer-heading" class="sr-only">Footer</h2>
+    <div class="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:pt-24 lg:px-8 lg:pt-32">
+      <div class="xl:grid xl:grid-cols-3 xl:gap-8">
+        <div class="space-y-8">
+          <div class="flex items-center gap-2 group">
+            <i data-lucide="play-square" class="h-8 w-8 text-cyan-500 group-hover:text-cyan-400 transition-colors"></i>
+            <span class="font-bold text-xl tracking-tight text-white">VidVault</span>
+          </div>
+          <p class="text-sm leading-6 text-slate-400">
+            The best tool to download YouTube videos in MP4 & MP3. Fast, free and secure.
+          </p>
+          <div class="text-xs text-slate-500 mt-4 border-l-2 border-slate-800 pl-3">
+            Disclaimer: This tool is for personal use only. Please respect YouTube's Terms of Service and copyright laws. Do not download copyrighted content without permission.
+          </div>
+        </div>
+
+        <div class="mt-16 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
+          <div class="md:grid md:grid-cols-2 md:gap-8">
+            <div>
+              <h3 class="text-sm font-semibold leading-6 text-white">Quick Links</h3>
+              <ul role="list" class="mt-6 space-y-4">
+                <li><a href="#" class="text-sm leading-6 text-slate-400 hover:text-cyan-400 transition-colors">Downloader</a></li>
+                <li><a href="#features" class="text-sm leading-6 text-slate-400 hover:text-cyan-400 transition-colors">Features</a></li>
+                <li><a href="#how-it-works" class="text-sm leading-6 text-slate-400 hover:text-cyan-400 transition-colors">How it works</a></li>
+              </ul>
+            </div>
+            <div class="mt-10 md:mt-0">
+              <h3 class="text-sm font-semibold leading-6 text-white">Support</h3>
+              <ul role="list" class="mt-6 space-y-4">
+                <li><a href="#" class="text-sm leading-6 text-slate-400 hover:text-cyan-400 transition-colors">Contact Us</a></li>
+                <li><a href="#" class="text-sm leading-6 text-slate-400 hover:text-cyan-400 transition-colors">Report Issue</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="md:grid md:grid-cols-2 md:gap-8">
+            <div>
+              <h3 class="text-sm font-semibold leading-6 text-white">Legal</h3>
+              <ul role="list" class="mt-6 space-y-4">
+                <li><a href="#" class="text-sm leading-6 text-slate-400 hover:text-cyan-400 transition-colors">Privacy Policy</a></li>
+                <li><a href="#" class="text-sm leading-6 text-slate-400 hover:text-cyan-400 transition-colors">Terms of Service</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-16 border-t border-white/10 pt-8 sm:mt-20 lg:mt-24 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <p class="text-xs leading-5 text-slate-500">&copy; 2026 VidVault. All rights reserved.</p>
+        <p class="text-xs text-slate-600">Made with ❤️ for Creators</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Background Ambient & Parallax Engine -->
+  <script src="js/canvas.js"></script>
+  <!-- Application & Download Processing Engine -->
+  <script src="js/app.js"></script>
+</body>
 </html>
