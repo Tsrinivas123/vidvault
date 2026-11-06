@@ -345,7 +345,11 @@ def make_progress_hook(download_id: str):
                 stage_label = 'Downloading'
 
             spd_str = f"{speed / (1024*1024):.2f} MB/s" if speed else ''
-            eta_str = f"{eta}s" if eta else ''
+            try:
+                eta_val = int(round(float(eta))) if eta and float(eta) > 0 else 0
+                eta_str = f"{eta_val}s" if eta_val > 0 else ''
+            except (ValueError, TypeError):
+                eta_str = ''
 
             _set_progress(
                 download_id,
@@ -543,6 +547,11 @@ def video_info():
             ydl_opts = {
                 'noplaylist': True,
                 'extract_flat': False,
+                'extractor_args': {
+                    'youtube': {
+                        'skip': ['translated_subs', 'comments', 'subtitles', 'storyboard'],
+                    }
+                },
                 **get_ydl_opts_cookies()
             }
             info = run_ytdl(ydl_opts, lambda ydl: ydl.extract_info(url, download=False))

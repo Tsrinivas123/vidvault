@@ -91,6 +91,8 @@
   const downloadEtaText = document.getElementById('download-eta-text');
   const downloadPercentText = document.getElementById('download-percent-text');
   const downloadProgressBar = document.getElementById('download-progress-bar');
+  const ariseCinematic = document.getElementById('arise-cinematic');
+  const jinwooEyeGlow = document.getElementById('jinwoo-eye-glow');
   const downloadErrorBox = document.getElementById('download-error-box');
   const downloadErrorMsg = document.getElementById('download-error-msg');
   const btnCloseError = document.getElementById('btn-close-error');
@@ -388,6 +390,11 @@
 
     isDownloading = true;
     downloadErrorBox.classList.add('hidden');
+    if (ariseCinematic) {
+      ariseCinematic.classList.add('hidden');
+      ariseCinematic.classList.remove('animate-arise-burst');
+    }
+    if (jinwooEyeGlow) jinwooEyeGlow.classList.add('hidden');
     downloadStatusBox.classList.remove('hidden');
 
     // Reset progress UI
@@ -395,7 +402,7 @@
     downloadPercentText.textContent = '2%';
     downloadSpeedText.textContent = '';
     downloadEtaText.textContent = '';
-    downloadStageText.textContent = isAudio ? 'Downloading audio...' : 'Downloading video...';
+    downloadStageText.textContent = isAudio ? 'Extracting audio shadow...' : 'Connecting to stream...';
 
     // Disable all download buttons while one is in progress
     document.querySelectorAll('#video-formats-grid button, #audio-formats-grid button, #btn-download-best').forEach(b => {
@@ -421,7 +428,13 @@
           }
           if (status.stage) downloadStageText.textContent = status.stage;
           if (status.speed) downloadSpeedText.textContent = `(${status.speed})`;
-          if (status.eta) downloadEtaText.textContent = `ETA: ${status.eta}`;
+          if (status.eta) {
+            const rawEta = String(status.eta).replace('s', '');
+            const cleanEta = Math.round(parseFloat(rawEta) || 0);
+            downloadEtaText.textContent = cleanEta > 0 ? `ETA: ${cleanEta}s` : '';
+          } else {
+            downloadEtaText.textContent = '';
+          }
 
           if (status.status === 'complete' || status.status === 'error') {
             clearInterval(pollInterval);
@@ -465,7 +478,14 @@
 
       downloadProgressBar.style.width = '100%';
       downloadPercentText.textContent = '100%';
-      downloadStageText.textContent = 'Download Complete! Delivering file...';
+      downloadStageText.textContent = 'Shadow Extraction Complete! Delivering file...';
+
+      if (jinwooEyeGlow) jinwooEyeGlow.classList.remove('hidden');
+      if (ariseCinematic) {
+        ariseCinematic.classList.remove('hidden');
+        ariseCinematic.classList.add('animate-arise-burst');
+        refreshIcons();
+      }
 
       if (resData.success && resData.downloadUrl) {
         const link = document.createElement('a');
@@ -480,6 +500,11 @@
       }
 
       setTimeout(() => {
+        if (ariseCinematic) {
+          ariseCinematic.classList.add('hidden');
+          ariseCinematic.classList.remove('animate-arise-burst');
+        }
+        if (jinwooEyeGlow) jinwooEyeGlow.classList.add('hidden');
         downloadStatusBox.classList.add('hidden');
         downloadProgressBar.style.width = '0%';
       }, 2500);

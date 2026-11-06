@@ -314,22 +314,97 @@
                   </p>
                 </div>
 
-                <!-- Live Download Status Progress Box -->
-                <div id="download-status-box" class="hidden mb-4 bg-slate-950/90 p-3.5 rounded-xl border border-cyan-500/40 shadow-[0_0_20px_-5px_rgba(6,182,212,0.4)]">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs text-slate-200 flex items-center gap-2 font-medium">
-                      <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-cyan-400"></i>
-                      <span id="download-stage-text">Downloading...</span>
-                      <span id="download-speed-text" class="text-emerald-400 font-mono text-[11px] font-semibold"></span>
-                    </span>
+                <!-- Live Download Status Progress Box (Solo Leveling Jin-Woo & Shadow Army) -->
+                <div id="download-status-box" class="hidden mb-4 bg-slate-950/95 backdrop-blur-xl p-4 rounded-2xl border border-purple-500/40 shadow-[0_0_30px_-5px_rgba(168,85,247,0.35)] relative overflow-hidden transition-all duration-300">
+                  
+                  <!-- Subtle background aura glow -->
+                  <div class="absolute inset-0 bg-gradient-to-r from-purple-900/20 via-transparent to-cyan-900/20 pointer-events-none"></div>
+                  <div class="absolute inset-0 opacity-20 pointer-events-none shadow-mana-glow"></div>
+
+                  <!-- Header: System Status & Stats -->
+                  <div class="flex items-center justify-between mb-3 relative z-10">
                     <div class="flex items-center gap-2">
-                      <span id="download-eta-text" class="text-[11px] text-slate-400 font-mono"></span>
-                      <span id="download-percent-text" class="text-xs text-cyan-400 font-bold font-mono">0%</span>
+                      <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500 shadow-[0_0_8px_#a855f7]"></span>
+                      </span>
+                      <span class="text-xs font-mono font-bold tracking-wider text-purple-300 uppercase flex items-center gap-1">
+                        <span>[SYSTEM:</span>
+                        <span class="text-cyan-300">SHADOW EXTRACTION]</span>
+                      </span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                      <span id="download-eta-text" class="text-xs text-purple-300/80 font-mono"></span>
+                      <span id="download-percent-text" class="text-xs px-2.5 py-0.5 rounded-full font-bold font-mono bg-purple-950/80 text-cyan-300 border border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.4)]">0%</span>
                     </div>
                   </div>
-                  <div class="h-2 bg-slate-900 rounded-full overflow-hidden border border-white/10">
-                    <div id="download-progress-bar" class="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 shadow-[0_0_8px_#22d3ee] transition-all duration-300 w-0"></div>
+
+                  <!-- Main Animation Track: Jin-Woo (Left) + Shadow Army Progress Bar (Right) -->
+                  <div class="flex items-center gap-3.5 relative z-10">
+                    
+                    <!-- Left: Sung Jin-Woo Monarch Avatar -->
+                    <div class="relative flex-shrink-0">
+                      <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-slate-900/90 border border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.5)] jinwoo-shadow-avatar flex items-center justify-center relative">
+                        <img id="jinwoo-avatar-img" src="assets/solo-leveling/jinwoo-shadow-monarch.png" alt="Sung Jin-Woo" class="w-full h-full object-cover object-top scale-110" />
+                        <!-- Glowing eyes overlay on 100% -->
+                        <div id="jinwoo-eye-glow" class="hidden absolute inset-0 bg-cyan-400/25 mix-blend-screen pointer-events-none animate-pulse"></div>
+                      </div>
+                      <!-- Jin-Woo energy emitter indicator -->
+                      <span class="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee] animate-ping"></span>
+                    </div>
+
+                    <!-- Right: Progress Track with Marching Army -->
+                    <div class="flex-1 relative">
+                      <!-- Dark tech track container -->
+                      <div class="h-11 bg-slate-950/90 rounded-xl overflow-visible border border-purple-500/30 p-1 relative shadow-inner flex items-center">
+                        
+                        <!-- Track Background Guide -->
+                        <div class="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
+                          <div class="w-full h-full opacity-10 bg-gradient-to-r from-purple-500 via-transparent to-cyan-500"></div>
+                        </div>
+
+                        <!-- Progress Fill: The Marching Shadow Army -->
+                        <div id="download-progress-bar" class="h-full rounded-lg bg-gradient-to-r from-purple-950 via-purple-900 to-indigo-900 relative transition-all duration-300 w-0 overflow-visible shadow-[0_0_15px_rgba(168,85,247,0.6)] border border-purple-400/40">
+                          
+                          <!-- Continuous Marching Shadow Soldier Strip inside fill -->
+                          <div class="absolute inset-0 rounded-lg shadow-army-march opacity-85"></div>
+                          
+                          <!-- Flowing Mana Glow Overlay -->
+                          <div class="absolute inset-0 rounded-lg shadow-mana-glow opacity-40 mix-blend-screen"></div>
+
+                          <!-- Shadow Vanguard Knight leading the charge at the edge -->
+                          <div id="shadow-vanguard" class="absolute -right-3.5 -top-1.5 w-8 h-12 pointer-events-none transition-all duration-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.9)]">
+                            <img src="assets/solo-leveling/shadow-knight-vanguard.png" alt="Shadow Vanguard" class="w-full h-full object-contain filter contrast-125" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
+                  <!-- Bottom Stage / Status Info -->
+                  <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-purple-900/40 relative z-10 text-[11px] font-mono">
+                    <div class="flex items-center gap-2 text-slate-300 truncate">
+                      <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 animate-spin" style="animation-duration: 4s;"></i>
+                      <span id="download-stage-text" class="truncate text-slate-200">Connecting to stream...</span>
+                      <span id="download-speed-text" class="text-emerald-400 font-semibold flex-shrink-0"></span>
+                    </div>
+                    <span class="text-purple-400/70 text-[10px] uppercase tracking-wider hidden sm:inline flex-shrink-0">
+                      Solo Leveling Engine
+                    </span>
+                  </div>
+
+                  <!-- Cinematic ARISE! Overlay (triggers on 100% completion) -->
+                  <div id="arise-cinematic" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md rounded-2xl z-30 flex flex-col items-center justify-center p-4 border border-cyan-400/80 shadow-[0_0_40px_rgba(34,211,238,0.5)]">
+                    <div class="text-cyan-400 font-black tracking-[0.3em] text-2xl sm:text-3xl drop-shadow-[0_0_20px_#22d3ee] mb-1 font-mono uppercase">
+                      A R I S E !
+                    </div>
+                    <div class="text-purple-300 text-xs font-mono tracking-wider flex items-center gap-1.5">
+                      <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+                      <span>EXTRACTION COMPLETE • DOWNLOADING FILE</span>
+                    </div>
+                  </div>
+
                 </div>
 
                 <!-- Download Error Banner -->
