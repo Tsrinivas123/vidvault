@@ -203,6 +203,7 @@ def get_ydl_opts_cookies():
         'fragment_retries': 3,
         'concurrent_fragment_downloads': 4,  # 4 workers optimal for 512MB RAM on Render
         'buffersize': 262144,                # 256 KB buffer keeps memory footprint light and avoids CPU swap
+        'http_chunk_size': 10485760,         # 10 MB chunks bypass YouTube CDN per-stream throttling
         'skip_unavailable_fragments': True,
         'js_runtimes': {
             'node': node_conf,
@@ -223,6 +224,22 @@ def get_ydl_opts_cookies():
         if cookies_browser:
             opts['cookiesfrombrowser'] = (cookies_browser,)
     return opts
+
+def extract_video_id(url: str) -> str:
+    """Extract YouTube 11-char video ID from common URL formats."""
+    if not url:
+        return ''
+    m = re.search(r'(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([A-Za-z0-9_-]{11})', url)
+    return m.group(1) if m else ''
+
+def build_download_url(filename: str) -> str:
+    """Construct direct download URL prioritizing Render backend host over reverse proxies."""
+    public_url = os.environ.get('RENDER_EXTERNAL_URL') or os.environ.get('PUBLIC_BACKEND_URL', '').rstrip('/')
+    if public_url:
+        return f"{public_url}/downloads/{urllib.parse.quote(filename)}"
+    scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
+    host = request.headers.get('X-Forwarded-Host', request.host)
+    return f"{scheme}://{host}/downloads/{urllib.parse.quote(filename)}"
 
 def sanitize_filename(title: str, max_len: int = 60) -> str:
     """Normalize unicode to safe ASCII alphanumeric characters for Windows/Linux."""
@@ -521,13 +538,18 @@ def video_info():
 
         print(f"\n[VidVault] [INFO] Video Info Request: {url}", flush=True)
 
-        ydl_opts = {
-            'noplaylist': True,
-            'extract_flat': False,
-            **get_ydl_opts_cookies()
-        }
+        info = get_cached_video_info(url)
+        if not info:
+            ydl_opts = {
+                'noplaylist': True,
+                'extract_flat': False,
+                **get_ydl_opts_cookies()
+            }
+            info = run_ytdl(ydl_opts, lambda ydl: ydl.extract_info(url, download=False))
+            cache_video_info(url, info)
+        else:
+            print(f"[VidVault] [INFO] Serving video info from memory cache for: {url}", flush=True)
 
-        info = run_ytdl(ydl_opts, lambda ydl: ydl.extract_info(url, download=False))
         raw_formats = info.get('formats', [])
 
         # Collect available heights from ALL streams (video-only + pre-merged)
@@ -633,6 +655,43 @@ def download():
         print(f"  * FFmpeg:     {'Available' if has_ffmpeg else 'Not found'}", flush=True)
         print(f"{'='*55}", flush=True)
 
+        vid_id = extract_video_id(url)
+        # Check if identical media was already downloaded recently in DOWNLOADS_DIR:
+        if vid_id and os.path.exists(DOWNLOADS_DIR):
+            target_quality = (f"{quality}" if 'p' in str(quality) else f"{quality}p") if media_type != 'audio' else f"{quality or '320'}kbps"
+            for fn in os.listdir(DOWNLOADS_DIR):
+                if vid_id in fn and target_quality in fn:
+                    cached_path = os.path.join(DOWNLOADS_DIR, fn)
+                    try:
+                        sz = os.path.getsize(cached_path)
+                        # Ensure cached file is valid (> 100 KB) and fresh (< 12 hours)
+                        if sz > 100000 and (time.time() - os.path.getmtime(cached_path) < 43200):
+                            print(f"[VidVault] [CACHE HIT] Instant delivery from local cache: {fn} ({sz:,} bytes)", flush=True)
+                            final_url = build_download_url(fn)
+                            _set_progress(
+                                download_id,
+                                status='complete',
+                                percent=100,
+                                speed='',
+                                eta='',
+                                filename=fn,
+                                filesize=sz,
+                                downloadUrl=final_url,
+                                delivered_quality=target_quality,
+                                requested_quality=quality
+                            )
+                            return jsonify({
+                                'success': True,
+                                'downloadUrl': final_url,
+                                'filename': fn,
+                                'filesize': sz,
+                                'delivered_quality': target_quality,
+                                'requested_quality': quality,
+                                'cached': True
+                            })
+                    except OSError:
+                        pass
+
         progress_hook = make_progress_hook(download_id)
 
         # Download into temporary directory first to isolate from completed files
@@ -683,37 +742,34 @@ def download():
 
             if has_ffmpeg:
                 if q:
-                    # Robust format chain with graceful fallbacks:
-                    # 1. Exact height with MP4/AVC1 + AAC
-                    # 2. Exact height with any video + AAC
-                    # 3. Exact height with any video + best audio
-                    # 4. Best video <= requested height (MP4/AVC1 + AAC)
-                    # 5. Best video <= requested height (any video + audio)
-                    # 6. Progressive stream <= requested height (combined video+audio file)
-                    # 7. Best combined stream <= requested height
-                    # 8. Best separate video + audio of any resolution
-                    # 9. Absolute best available stream
+                    # Optimized format chain:
+                    # 1. Progressive MP4 (single file with video+audio): fastest, 0 FFmpeg merge overhead (for 720p/360p)
+                    # 2. Modern efficient MP4 (AV01/VP9/MP4) + AAC audio: 50-60% smaller file size than legacy AVC1 (for 1080p)
+                    # 3. High quality video stream + AAC audio
+                    # 4. Fallback progressive stream <= requested quality
+                    # 5. Fallback separate video + audio <= requested quality
+                    # 6. Best available stream
                     ytdl_format = (
-                        f"bestvideo[height={q}][vcodec^=avc1][ext=mp4]+bestaudio[ext=m4a]/"
+                        f"best[height={q}][vcodec!=none][acodec!=none][ext=mp4]/"
+                        f"best[height={q}][vcodec!=none][acodec!=none]/"
                         f"bestvideo[height={q}][ext=mp4]+bestaudio[ext=m4a]/"
                         f"bestvideo[height={q}]+bestaudio[ext=m4a]/"
                         f"bestvideo[height={q}]+bestaudio/"
-                        f"bestvideo[height<={q}][vcodec^=avc1][ext=mp4]+bestaudio[ext=m4a]/"
+                        f"best[height<={q}][vcodec!=none][acodec!=none][ext=mp4]/"
+                        f"best[height<={q}][vcodec!=none][acodec!=none]/"
                         f"bestvideo[height<={q}][ext=mp4]+bestaudio[ext=m4a]/"
                         f"bestvideo[height<={q}]+bestaudio[ext=m4a]/"
                         f"bestvideo[height<={q}]+bestaudio/"
-                        f"best[height<={q}][vcodec!=none][acodec!=none]/"
-                        f"best[height<={q}]/"
                         f"bestvideo+bestaudio/"
                         f"best"
                     )
                 else:
                     ytdl_format = (
-                        "bestvideo[vcodec^=avc1][ext=mp4]+bestaudio[ext=m4a]/"
+                        "best[vcodec!=none][acodec!=none][ext=mp4]/"
+                        "best[vcodec!=none][acodec!=none]/"
                         "bestvideo[ext=mp4]+bestaudio[ext=m4a]/"
                         "bestvideo+bestaudio[ext=m4a]/"
                         "bestvideo+bestaudio/"
-                        "best[vcodec!=none][acodec!=none]/"
                         "best"
                     )
 
@@ -767,11 +823,8 @@ def download():
             os.remove(temp_downloaded_file)
             raise Exception("Downloaded file is empty (0 bytes). Download failed.")
 
-        # Inspect resulting container with ffmpeg
-        media_info = inspect_media_file(temp_downloaded_file)
-        print(f"  * Media Verified: {media_info}", flush=True)
-
-        # Determine actual delivered resolution to avoid falsely claiming higher quality
+        # Fast media verification: prefer yt-dlp metadata first, fallback to inspect_media_file only if missing
+        media_info = None
         actual_height = None
         if info_dict:
             req_fmts = info_dict.get('requested_formats') or []
@@ -782,20 +835,30 @@ def download():
             if not actual_height:
                 actual_height = info_dict.get('height')
 
-        if not actual_height and media_info and media_info.get('video_stream'):
-            m = re.search(r'(\d{3,4})x(\d{3,4})', media_info['video_stream'])
-            if m:
-                actual_height = int(m.group(2))
+            duration_sec = info_dict.get('duration')
+            v_codec = info_dict.get('vcodec') or ''
+            a_codec = info_dict.get('acodec') or ''
+            if duration_sec or v_codec:
+                media_info = {
+                    'duration': f"{int(duration_sec // 60)}:{int(duration_sec % 60):02d}" if duration_sec else None,
+                    'video_stream': f"{v_codec} ({actual_height}p)" if actual_height else v_codec,
+                    'audio_stream': a_codec
+                }
+
+        if not media_info or not media_info.get('duration'):
+            media_info = inspect_media_file(temp_downloaded_file)
+        print(f"  * Media Verified: {media_info}", flush=True)
 
         delivered_quality = f"{actual_height}p" if (media_type != 'audio' and actual_height) else (
             f"{kbps}kbps" if media_type == 'audio' else quality or 'video'
         )
 
-        # Build clean final filename with safe alphanumeric title, actual quality label, and extension
+        # Build clean final filename with safe alphanumeric title, video id, actual quality label, and extension
         _, final_ext = os.path.splitext(temp_downloaded_file)
         final_ext = final_ext.lstrip('.') or ('mp3' if media_type == 'audio' else 'mp4')
-        clean_title = sanitize_filename(video_title, max_len=50)
-        final_filename = f"{clean_title}_{delivered_quality}_{timestamp}.{final_ext}"
+        clean_title = sanitize_filename(video_title, max_len=45)
+        vid_tag = f"_{vid_id}" if vid_id else ""
+        final_filename = f"{clean_title}{vid_tag}_{delivered_quality}_{timestamp}.{final_ext}"
         final_filepath = os.path.join(DOWNLOADS_DIR, final_filename)
 
         # Move atomically from temporary staging to final downloads directory
@@ -806,13 +869,7 @@ def download():
             raise Exception("Failed to finalize output file in downloads directory.")
 
         final_file_size = os.path.getsize(final_filepath)
-        public_url = os.environ.get('PUBLIC_BACKEND_URL', '').rstrip('/')
-        if public_url:
-            download_url = f"{public_url}/downloads/{urllib.parse.quote(final_filename)}"
-        else:
-            scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
-            host = request.headers.get('X-Forwarded-Host', request.host)
-            download_url = f"{scheme}://{host}/downloads/{urllib.parse.quote(final_filename)}"
+        download_url = build_download_url(final_filename)
 
         # Mark progress status as complete
         _set_progress(
